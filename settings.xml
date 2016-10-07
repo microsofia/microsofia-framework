@@ -143,4 +143,25 @@
 			</endpoint.msofiarmi>
 		</endpoints>
    </application>
+   <application name="client1" type="client">
+   		<properties>
+			<property name="registry">
+				<registry>
+					<cluster>
+						<registry host="localhost" port="9992"/>
+						<registry host="localhost" port="9991"/>
+						<registry host="localhost" port="9990"/>
+					</cluster>
+				</registry>
+			</property>
+		</properties>	
+		<endpoints>
+			<endpoint.msofiarmi name="fwk">
+				<server>
+					<host>localhost</host>
+					<port>9989</port>
+				</server>
+			</endpoint.msofiarmi>
+		</endpoints>
+   </application>
 </settings>

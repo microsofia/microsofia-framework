@@ -1,5 +1,6 @@
 package microsofia.framework.service;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,12 +11,17 @@ import io.atomix.catalyst.serializer.Serializer;
 import microsofia.rmi.ObjectAddress;
 import microsofia.rmi.ServerAddress;
 
-public class ServiceAddress implements CatalystSerializable{
+public class ServiceAddress implements CatalystSerializable,Serializable{
+	private static final long serialVersionUID = 0L;
 	private ObjectAddress objectAddress;
 
 	public ServiceAddress(){
 	}
 
+	public ServiceAddress(ServiceAddress sa){
+		this.objectAddress=new ObjectAddress(sa.objectAddress.getServerAddress(), sa.getObjectAddress().getId(), sa.getObjectAddress().getInterfaces());
+	}
+	
 	public ObjectAddress getObjectAddress() {
 		return objectAddress;
 	}
@@ -57,5 +63,23 @@ public class ServiceAddress implements CatalystSerializable{
 			}
     	}
     	getObjectAddress().setInterfaces(interfaces.toArray(new Class<?>[0]));
+    }
+    
+    @Override
+    public int hashCode(){
+    	return objectAddress.hashCode();
+    }
+    
+    @Override
+    public boolean equals(Object o){
+    	if (!(o instanceof ServiceAddress)){
+    		return false;
+    	}
+    	return ((ServiceAddress)o).objectAddress.equals(objectAddress);
+    }
+    
+    @Override
+    public String toString(){
+    	return "Service[ObjectAddress:"+objectAddress+"]";
     }
 }

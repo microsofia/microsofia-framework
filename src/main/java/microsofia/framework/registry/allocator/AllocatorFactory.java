@@ -1,4 +1,4 @@
-package microsofia.framework.registry.atomix;
+package microsofia.framework.registry.allocator;
 
 import java.util.Properties;
 
@@ -7,23 +7,23 @@ import io.atomix.copycat.client.CopycatClient;
 import io.atomix.resource.ResourceFactory;
 import io.atomix.resource.ResourceStateMachine;
 
-public class ServicesAddressFactory implements ResourceFactory<ServicesAddress> {
+public class AllocatorFactory implements ResourceFactory<Allocator> {
 
-	public ServicesAddressFactory(){
+	public AllocatorFactory(){
 	}
 	
 	@Override
 	public SerializableTypeResolver createSerializableTypeResolver() {
-		return new Commands.TypeResolver();
+		return new AllocatorCommands.TypeResolver();
 	}
 	
 	@Override
 	public ResourceStateMachine createStateMachine(Properties config) {
-		return new ServicesAddressState(config);
+		return new AllocatorState(config);
 	}
 	
 	@Override
-	public ServicesAddress createInstance(CopycatClient client, Properties options) {
-		return new ServicesAddress(client, options);
+	public Allocator createInstance(CopycatClient client, Properties options) {
+		return new Allocator(client, options);
 	}
 }
