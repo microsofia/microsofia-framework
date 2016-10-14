@@ -5,8 +5,14 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.github.microsofia</groupId>
-	<artifactId>microsofia-framework</artifactId>
+	<artifactId>microsofia-framework-parent</artifactId>
 	<version>1.0</version>
+	<packaging>pom</packaging>
+
+	<modules>
+		<module>atomix</module>
+		<module>framework</module>
+	</modules>
 
 	<build>
             <plugins>
@@ -26,31 +32,43 @@
 		    </plugins>
 	</build>
 
-	<dependencies>
-		<dependency>
-			<groupId>commons-logging</groupId>
-			<artifactId>commons-logging</artifactId>
-			<version>1.1.1</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
-		</dependency>
-		<dependency>
-			<groupId>io.atomix</groupId>
-			<artifactId>atomix-all</artifactId>
-			<version>1.0.0-rc9</version>
-		</dependency>		
-		<dependency>
-			<groupId>com.github.microsofia</groupId>
-			<artifactId>microsofia-container-api</artifactId>
-			<version>1.0</version>
-		</dependency>		
-		<dependency>
-			<groupId>com.github.microsofia</groupId>
-			<artifactId>microsofia-container-impl</artifactId>
-			<version>1.0</version>
-		</dependency>		
-    </dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.github.microsofia</groupId>
+				<artifactId>microsofia-framework-atomix</artifactId>
+				<version>1.0</version>
+			</dependency>
+			<dependency>
+				<groupId>com.github.microsofia</groupId>
+				<artifactId>microsofia-framework</artifactId>
+				<version>1.0</version>
+			</dependency>
+			<dependency>
+				<groupId>commons-logging</groupId>
+				<artifactId>commons-logging</artifactId>
+				<version>1.1.1</version>
+			</dependency>
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>4.12</version>
+			</dependency>
+			<dependency>
+				<groupId>io.atomix</groupId>
+				<artifactId>atomix-all</artifactId>
+				<version>1.0.0-rc9</version>
+			</dependency>		
+			<dependency>
+				<groupId>com.github.microsofia</groupId>
+				<artifactId>microsofia-container-api</artifactId>
+				<version>1.0</version>
+			</dependency>		
+			<dependency>
+				<groupId>com.github.microsofia</groupId>
+				<artifactId>microsofia-container-impl</artifactId>
+				<version>1.0</version>
+			</dependency>		
+	    </dependencies>
+	</dependencyManagement>
 </project>
