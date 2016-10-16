@@ -39,5 +39,21 @@
 			<groupId>com.github.microsofia</groupId>
 			<artifactId>microsofia-framework-atomix</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.hyperic</groupId>
+			<artifactId>sigar</artifactId>
+		</dependency>	
+		<dependency>
+	        <groupId>org.hyperic</groupId>
+	        <artifactId>sigar</artifactId>
+	        <type>zip</type>
+	        <classifier>libs</classifier>
+	    </dependency>
+	    <dependency>
+	        <groupId>org.hyperic</groupId>
+	        <artifactId>sigar</artifactId>
+	        <type>zip</type>
+	        <classifier>libs-a</classifier>
+	    </dependency>
     </dependencies>
 </project>

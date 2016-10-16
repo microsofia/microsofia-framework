@@ -69,6 +69,25 @@
 				<artifactId>microsofia-container-impl</artifactId>
 				<version>1.0</version>
 			</dependency>		
+			<dependency>
+				<groupId>org.hyperic</groupId>
+				<artifactId>sigar</artifactId>
+				<version>1.6.7</version>
+			</dependency>	
+			<dependency>
+	            <groupId>org.hyperic</groupId>
+	            <artifactId>sigar</artifactId>
+	            <version>1.6.7</version>
+	            <type>zip</type>
+	            <classifier>libs</classifier>
+	        </dependency>
+	        <dependency>
+	            <groupId>org.hyperic</groupId>
+	            <artifactId>sigar</artifactId>
+	            <version>1.6.7</version>
+	            <type>zip</type>
+	            <classifier>libs-a</classifier>
+	        </dependency>
 	    </dependencies>
 	</dependencyManagement>
 </project>

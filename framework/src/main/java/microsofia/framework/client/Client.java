@@ -1,67 +1,63 @@
 package microsofia.framework.client;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
 
-import io.atomix.AtomixClient;
-import io.atomix.catalyst.transport.Address;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import microsofia.container.module.endpoint.Server;
-import microsofia.container.module.property.Property;
-import microsofia.framework.invoker.Invoker;
-import microsofia.framework.map.Map;
-import microsofia.framework.registry.IAllocationService;
-import microsofia.framework.registry.RegistryConfiguration;
-import microsofia.framework.service.Service;
+import microsofia.framework.FrameworkException;
+import microsofia.framework.agent.IAgentService;
+import microsofia.framework.registry.IRegistryService;
 import microsofia.framework.service.ServiceAddress;
 
+//TODO can either run a main client/agent/registry or be embedded
 @Server("fwk")
-public class Client extends Service implements IClient{
+public class Client extends AbstractClient implements IClient{
+	private Log log=LogFactory.getLog(Client.class);
 	@Inject
-	@Property("registry")
-	private RegistryConfiguration registryConfiguration;	
-	protected AtomixClient atomixClient;
-	protected Map<ServiceAddress,ServiceAddress> clients;
-	protected Invoker invoker;
-	protected IAllocationService allocationService;
+	protected ClientConfiguration clientConfiguration;	
 	
 	public Client(){
 	}
+
+	@Override
+	public ClientConfiguration getClientConfiguration(){
+		return clientConfiguration;
+	}
 	
-	public RegistryConfiguration getRegistryConfiguration() {
-		return registryConfiguration;
-	}
-
-	public void setRegistryConfiguration(RegistryConfiguration registryConfiguration) {
-		this.registryConfiguration = registryConfiguration;
-	}
-
-	@SuppressWarnings("unchecked")
-	public void connect() throws Exception{
-		initAddress();
-		
-		List<Address> adr=new ArrayList<>();
-		for (RegistryConfiguration.Address a : getRegistryConfiguration().getAddress()){
-			adr.add(new Address(a.getHost(), a.getPort()));
+	@Override
+	public void start(){
+		super.start();
+		try{
+			System.out.println("Client connected...");
+			Thread.sleep(5000);
+			ServiceAddress sa=lookupService.searchAgent();
+			
+			IAgentService agentService=getAgentService(sa);
+			System.out.println("Allocation worked!!!!!!!!!! Response= "+sa);
+			System.out.println("Allocation worked!!!!!!!!!! Response= "+agentService.getServiceInfo());
+			
+			List<IRegistryService> registries=getRegistries();
+			for (IRegistryService reg : registries){
+				System.out.println("REgistry found=="+reg);
+			}
+		}catch(Throwable th){
+			throw new FrameworkException(th.getMessage(), th);
 		}
-		
-		atomixClient=AtomixClient.builder().withResourceTypes((Class)Map.class,Invoker.class).build();
-		atomixClient.serializer().register(ServiceAddress.class,1986);
-		atomixClient.connect(adr).get();
+		log.info("Client ready...");
+	}
+	
+	@Override
+	public void stop(){
+		super.stop();
+		log.info("Client stopped.");
+	}
 
-		clients=atomixClient.getResource("clients", Map.class).get();
-		invoker=atomixClient.getResource("invoker", Invoker.class).get();
-		allocationService=invoker.getProxy(IAllocationService.class);
-
-		clients.put(serviceAddress,serviceAddress).get();
-		clients.get(serviceAddress).get();
-
-		System.out.println("Client connected...");
-		
-		Thread.sleep(5000);
-		ServiceAddress sa=allocationService.allocate();
-		System.out.println("Allocation worked!!!!!!!!!! Response= "+sa);
-
+	@Override
+	protected String getServiceAddressMap() {
+		return "clients";
 	}
 }

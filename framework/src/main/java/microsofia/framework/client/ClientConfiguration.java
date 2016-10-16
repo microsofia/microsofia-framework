@@ -1,4 +1,4 @@
-package microsofia.framework.registry;
+package microsofia.framework.client;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,46 +16,26 @@ import org.w3c.dom.Element;
 
 import microsofia.container.application.PropertyConfig;
 
-@XmlRootElement(name="registry")
+@XmlRootElement(name="client")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class RegistryConfiguration {
-	@XmlAttribute
-	private String host;
-	@XmlAttribute
-	private int port;
-	@XmlElementWrapper(name="members")
-	@XmlElement(name="member")
-	private List<Member> member;
+public class ClientConfiguration{
+	@XmlElementWrapper(name="registries")
+	@XmlElement(name="registry")
+	protected List<Registry> registry;
 	@XmlElementWrapper(name="properties")
 	@XmlElement(name="property")
 	private List<PropertyConfig> properties;
 	
-	public RegistryConfiguration(){
+	public ClientConfiguration(){
 		properties=new ArrayList<>();
 	}
-	
-	public String getHost(){
-		return host;
-	}
-	
-	public void setHost(String s){
-		host=s;
+
+	public List<Registry> getRegistry() {
+		return registry;
 	}
 
-	public int getPort() {
-		return port;
-	}
-
-	public void setPort(int localPort) {
-		this.port = localPort;
-	}
-
-	public List<Member> getMember() {
-		return member;
-	}
-
-	public void setMember(List<Member> member) {
-		this.member = member;
+	public void setRegistry(List<Registry> registry) {
+		this.registry = registry;
 	}
 	
 	public List<PropertyConfig> getProperties() {
@@ -67,13 +47,13 @@ public class RegistryConfiguration {
 	}
 
 	@XmlAccessorType(XmlAccessType.FIELD)
-	public static class Member{
+	public static class Registry{
 		@XmlAttribute
 		private String host;
 		@XmlAttribute
 		private int port;
 		
-		public Member(){
+		public Registry(){
 		}
 
 		public String getHost() {
@@ -96,17 +76,17 @@ public class RegistryConfiguration {
 	private static JAXBContext jaxbContext=null;
 	static{
 		try{
-			jaxbContext=JAXBContext.newInstance(RegistryConfiguration.class);
+			jaxbContext=JAXBContext.newInstance(ClientConfiguration.class);
 		}catch(Exception e){
 			e.printStackTrace();
 		}
 	}
 	
-	public static RegistryConfiguration readFrom(Element[] element) throws Exception{
+	public static ClientConfiguration createClientConfiguration(Element[] element) throws Exception{
 		Unmarshaller unmarshaller=jaxbContext.createUnmarshaller();
 		if (element!=null){
 			for (Element e : element){
-				RegistryConfiguration conf=(RegistryConfiguration)unmarshaller.unmarshal(e);
+				ClientConfiguration conf=(ClientConfiguration)unmarshaller.unmarshal(e);
 				if (conf!=null){
 					return conf;
 				}

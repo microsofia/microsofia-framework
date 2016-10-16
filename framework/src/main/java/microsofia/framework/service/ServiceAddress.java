@@ -7,6 +7,7 @@ import io.atomix.catalyst.buffer.BufferInput;
 import io.atomix.catalyst.buffer.BufferOutput;
 import io.atomix.catalyst.serializer.CatalystSerializable;
 import io.atomix.catalyst.serializer.Serializer;
+import microsofia.framework.FrameworkException;
 import microsofia.rmi.ObjectAddress;
 import microsofia.rmi.ServerAddress;
 
@@ -52,8 +53,7 @@ public class ServiceAddress implements CatalystSerializable{
     		try {
 				interfaces.add(Class.forName(buffer.readString()));
 			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				throw new FrameworkException(e.getMessage(), e);
 			}
     	}
     	getObjectAddress().setInterfaces(interfaces.toArray(new Class<?>[0]));

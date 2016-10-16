@@ -18,7 +18,7 @@ public class InvokerServiceAdapter implements IInvokerService {
 	@Override
 	public void start(){
 		if (service instanceof IStartable){
-			((IStartable)service).start();
+			((IStartable)service).startInvocation();
 		}
 	}
 	
@@ -49,15 +49,15 @@ public class InvokerServiceAdapter implements IInvokerService {
 	@Override
 	public void stop(){
 		if (service instanceof IStoppable){
-			((IStoppable)service).stop();
+			((IStoppable)service).stopInvocation();
 		}
 	}
 
 	public static interface IStartable{
-		public void start();
+		public void startInvocation();
 	}
 
 	public static interface IStoppable{
-		public void stop();
+		public void stopInvocation();
 	}
 }
