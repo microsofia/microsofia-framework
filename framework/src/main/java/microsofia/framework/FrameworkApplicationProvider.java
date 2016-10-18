@@ -3,10 +3,7 @@ package microsofia.framework;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-
 import com.google.inject.AbstractModule;
-
-import microsofia.container.ContainerException;
 import microsofia.container.InitializationContext;
 import microsofia.container.application.ApplicationProvider;
 import microsofia.container.application.DefaultApplication;
@@ -31,11 +28,11 @@ public class FrameworkApplicationProvider extends ApplicationProvider{
 		List<IApplication> applications=new ArrayList<>();
 		
 		Consumer<Object> start=it->{
-			((Service)it).start();
+			((Service<?,?>)it).start();
 		};
 		
 		Consumer<Object> stop=it->{
-			((Service)it).stop();
+			((Service<?,?>)it).stop();
 		};
 
 		//registry application
@@ -57,10 +54,10 @@ public class FrameworkApplicationProvider extends ApplicationProvider{
 			try{
 				clientConfiguration=ClientConfiguration.createClientConfiguration(it.getApplicationConfig().getElement());
 			}catch (Exception e) {
-				throw new ContainerException("Cannot read client configuration in settings file.",e);
+				throw new FrameworkException("Cannot read client configuration in settings file.",e);
 			}
 			if (clientConfiguration==null){
-				throw new ContainerException("Missing client configuration in settings file.");
+				throw new FrameworkException("Missing client configuration in settings file.");
 			}
 			
 			it.addGuiceModule(new AbstractModule() {
@@ -86,10 +83,10 @@ public class FrameworkApplicationProvider extends ApplicationProvider{
 			try{
 				agentConfiguration=AgentConfiguration.createAgentConfiguration(it.getApplicationConfig().getElement());
 			}catch (Exception e) {
-				throw new ContainerException("Cannot read agent configuration in settings file.",e);
+				throw new FrameworkException("Cannot read agent configuration in settings file.",e);
 			}
 			if (agentConfiguration==null){
-				throw new ContainerException("Missing agent configuration in settings file.");
+				throw new FrameworkException("Missing agent configuration in settings file.");
 			}
 
 			it.addGuiceModule(new AbstractModule() {				
@@ -115,10 +112,10 @@ public class FrameworkApplicationProvider extends ApplicationProvider{
 			try{
 				registryConfiguration=RegistryConfiguration.readFrom(it.getApplicationConfig().getElement());
 			}catch (Exception e) {
-				throw new ContainerException("Cannot read registry configuration in settings file.",e);
+				throw new FrameworkException("Cannot read registry configuration in settings file.",e);
 			}
 			if (registryConfiguration==null){
-				throw new ContainerException("Missing registry configuration in settings file.");
+				throw new FrameworkException("Missing registry configuration in settings file.");
 			}
 			it.addGuiceModule(new AbstractModule() {
 				

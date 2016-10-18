@@ -1,9 +1,11 @@
 package microsofia.framework.map;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import io.atomix.copycat.client.CopycatClient;
 import io.atomix.resource.AbstractResource;
@@ -12,9 +14,38 @@ import io.atomix.resource.ResourceTypeInfo;
 
 @ResourceTypeInfo(id=28, factory=MapFactory.class)
 public class Map<K,V> extends AbstractResource<Map<K,V>> {
+	private MapListener<K,V> mapListener;
 
 	public Map(CopycatClient client, Properties options) {
 		super(client, options);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public CompletableFuture<Map<K,V>> open() {
+		return super.open().thenApply(result -> {
+			client.onEvent("entryRemoved", it->{
+				Object[] o=(Object[])it;
+				entryRemoved((K)o[0], (V)o[1]);
+			});
+			return result;
+	    }).thenApply(result->{
+	    	return (Map<K,V>)result;
+	    });
+	}
+	
+	private void entryRemoved(K key,V value){
+		mapListener.entryRemoved(key, value);
+	}
+	
+	public CompletableFuture<Void> setMapListener(MapListener<K,V> listener){
+		this.mapListener=listener;
+		return client.submit(new MapCommands.AddListener());
+	}
+	
+	public CompletableFuture<Void> removeMapListener(){
+		this.mapListener=null;
+		return client.submit(new MapCommands.RemoveListener());
 	}
 
 	public CompletableFuture<Boolean> isEmpty() {
@@ -129,5 +160,15 @@ public class Map<K,V> extends AbstractResource<Map<K,V>> {
 	
 	public CompletableFuture<Void> clear() {
 		return client.submit(new MapCommands.Clear());
+	}
+	
+	@SuppressWarnings("unchecked")
+	public CompletableFuture<List<V>> values(Function<V,Boolean> function) {
+		return client.submit(new MapCommands.FilterValue((Function<Object,Boolean>)function)).thenApply(it -> (List<V>) it);
+	}
+
+	@SuppressWarnings("unchecked")
+	public CompletableFuture<List<V>> values(Function<Object,Boolean> function,ReadConsistency cons) {
+		return client.submit(new MapCommands.FilterValue((Function<Object,Boolean>)function,cons.level())).thenApply(it -> (List<V>) it);
 	}
 }

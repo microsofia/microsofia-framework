@@ -8,14 +8,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import microsofia.container.module.endpoint.Server;
-import microsofia.framework.FrameworkException;
 import microsofia.framework.agent.IAgentService;
 import microsofia.framework.registry.IRegistryService;
-import microsofia.framework.service.ServiceAddress;
+import microsofia.framework.registry.lookup.LookupRequest;
+import microsofia.framework.registry.lookup.LookupResult;
 
 //TODO can either run a main client/agent/registry or be embedded
 @Server("fwk")
-public class Client extends AbstractClient implements IClient{
+public class Client extends AbstractClient<ClientInfo> implements IClient{
 	private Log log=LogFactory.getLog(Client.class);
 	@Inject
 	protected ClientConfiguration clientConfiguration;	
@@ -29,35 +29,42 @@ public class Client extends AbstractClient implements IClient{
 	}
 	
 	@Override
-	public void start(){
-		super.start();
-		try{
-			System.out.println("Client connected...");
-			Thread.sleep(5000);
-			ServiceAddress sa=lookupService.searchAgent();
-			
-			IAgentService agentService=getAgentService(sa);
-			System.out.println("Allocation worked!!!!!!!!!! Response= "+sa);
-			System.out.println("Allocation worked!!!!!!!!!! Response= "+agentService.getServiceInfo());
-			
-			List<IRegistryService> registries=getRegistries();
-			for (IRegistryService reg : registries){
-				System.out.println("REgistry found=="+reg);
-			}
-		}catch(Throwable th){
-			throw new FrameworkException(th.getMessage(), th);
-		}
-		log.info("Client ready...");
-	}
-	
-	@Override
-	public void stop(){
-		super.stop();
-		log.info("Client stopped.");
+	public ClientInfo getInfo(){
+		return serviceInfo;
 	}
 
 	@Override
-	protected String getServiceAddressMap() {
-		return "clients";
+	protected ClientInfo createServiceInfo() {
+		return new ClientInfo();
+	}
+	
+	protected void internalStart() throws Exception{
+		clients.put(serviceInfo.getPid(),serviceInfo).get();		
+
+		Thread.sleep(5000);
+		LookupRequest request=new LookupRequest();
+		request.setClientInfo(serviceInfo);
+		request.setServiceName("test");
+		LookupResult result=lookupService.searchAgent(request);
+		if (result.getAgentInfo()==null){
+			System.out.println("Allocation worked!!!!!!!!!! no agent found!");
+		
+		}else{
+			IAgentService agentService=getAgentService(result.getAgentInfo());
+			System.out.println("Allocation worked!!!!!!!!!! Response= "+result.getAgentInfo());
+			System.out.println("Allocation worked!!!!!!!!!! Response= "+agentService.getInfo());
+		}
+			
+		List<IRegistryService> registries=getRegistries();
+		for (IRegistryService reg : registries){
+			System.out.println("REgistry found=="+reg);
+		}
+		log.info("Client connected...");
+	}
+
+	@Override
+	protected void internalStop() throws Exception{
+		clients.remove(serviceInfo.getPid()).get();
+		log.info("Client disconnected.");
 	}
 }

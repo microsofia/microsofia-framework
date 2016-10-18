@@ -5,5 +5,7 @@ import microsofia.framework.service.IService;
 
 @Server
 public interface IAgentService extends IService{
-
+	
+	@Override
+	public AgentInfo getInfo() throws Exception;
 }

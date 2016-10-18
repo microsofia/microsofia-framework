@@ -3,6 +3,7 @@ package microsofia.framework.map;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +35,8 @@ public class MapTest {
 	protected Map<Long,String> map3;
 	protected AtomixClient atomixClient;
 	protected Map<Long,String> map4;
+	protected AtomixClient atomixClient2;
+	protected Map<Long,String> map5;
 	protected Map<ServiceAddress,ServiceAddress> map32;
 	
 	@Before
@@ -73,15 +76,23 @@ public class MapTest {
 		atomixClient.serializer().register(ServiceAddress.class,1986);
 		CompletableFuture<Atomix> f4=atomixClient.connect(adr);
 		
+		@SuppressWarnings("unchecked")
+		AtomixClient.Builder builder5=AtomixClient.builder().withResourceTypes((Class)Map.class);
+		atomixClient2=builder5.build();
+		atomixClient2.serializer().register(ServiceAddress.class,1986);
+		CompletableFuture<Atomix> f5=atomixClient2.connect(adr);
+		
 		f1.get();
 		f2.get();
 		f3.get();
 		f4.get();
+		f5.get();
 		
 		map1=atomixReplica1.getResource("map",Map.class).get();
 		map2=atomixReplica1.getResource("map",Map.class).get();
 		map3=atomixReplica1.getResource("map",Map.class).get();
 		map4=atomixClient.getResource("map",Map.class).get();
+		map5=atomixClient2.getResource("map",Map.class).get();
 		
 		map12=atomixReplica1.getResource("mapsa",Map.class).get();
 		map22=atomixReplica1.getResource("mapsa",Map.class).get();
@@ -109,13 +120,45 @@ public class MapTest {
 	}
 	
 	@Test
+	public void testListener() throws Exception{
+		map1.put(new Long(1978), "charbel").get();
+		map2.put(new Long(1979), "charbel+1").get();
+		
+		java.util.Map<Long, String> removed=new HashMap<>();
+		map5.setMapListener(new MapListener<Long, String>() {
+			
+			@Override
+			public void entryRemoved(Long key, String value) {
+				removed.put(key, value);
+			}
+		}).get();
+		
+		map4.remove(new Long(1978)).get();
+		map4.remove(new Long(1979)).get();
+		Thread.sleep(5000);
+		
+		Assert.assertTrue("Map listener not notified that entry 1978 was removed.",removed.containsKey(new Long(1978)));
+		Assert.assertTrue("Map listener not notified that entry 1979 was removed.",removed.containsKey(new Long(1979)));
+	}
+	
+	@Test
 	public void testDisconnection() throws Exception{
+		java.util.Map<Long, String> removed=new HashMap<>();
+		map5.setMapListener(new MapListener<Long, String>() {
+			
+			@Override
+			public void entryRemoved(Long key, String value) {
+				removed.put(key, value);
+			}
+		}).get();
+		
 		map4.put(new Long(2014), "sofia").get();
 		Assert.assertEquals(map1.get(new Long(2014)).get(),"sofia");
 		
 		atomixClient.close().get();
 		Thread.sleep(5000);
 		Assert.assertNull("Value was not removed from context after client disconnection.",map1.get(new Long(2014)).get());
+		Assert.assertTrue("Map listener not notified that entry 2014 was removed.",removed.containsKey(new Long(2014)));
 	}
 	
 	@Test

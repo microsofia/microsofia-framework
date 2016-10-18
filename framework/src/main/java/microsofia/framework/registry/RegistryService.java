@@ -13,29 +13,28 @@ import io.atomix.AtomixReplica;
 import io.atomix.catalyst.transport.Address;
 import io.atomix.copycat.server.storage.Storage;
 import io.atomix.group.DistributedGroup;
+import io.atomix.variables.DistributedLong;
 import microsofia.container.application.PropertyConfig;
 import microsofia.container.module.endpoint.Server;
 import microsofia.framework.FrameworkException;
+import microsofia.framework.agent.AgentInfo;
 import microsofia.framework.agent.IAgentService;
-import microsofia.framework.client.IClient;
 import microsofia.framework.invoker.Invoker;
 import microsofia.framework.invoker.InvokerServiceAdapter;
 import microsofia.framework.map.Map;
+import microsofia.framework.registry.lookup.LookupResult;
 import microsofia.framework.registry.lookup.LookupService;
 import microsofia.framework.service.Service;
-import microsofia.framework.service.ServiceAddress;
 
 @Server("fwk")
-public class RegistryService extends Service implements IRegistryService{
+public class RegistryService extends Service<AtomixReplica,RegistryInfo> implements IRegistryService{
 	private static final Log log=LogFactory.getLog(RegistryService.class);
 	@Inject
-	private RegistryConfiguration registryConfiguration;
-	protected AtomixReplica atomixReplica;
+	protected RegistryConfiguration registryConfiguration;
+	protected DistributedLong globalLookupId;
 	protected DistributedGroup group;
-	protected Map<ServiceAddress, ServiceAddress> registries;
-	protected Map<ServiceAddress, ServiceAddress> agents;
-	protected Map<ServiceAddress, ServiceAddress> clients;
-	protected Invoker invoker;
+	protected Map<Long, AgentInfo> agents;
+	protected Map<Long,LookupResult> lookupResults;
 	protected LookupService lookupService;
 	protected InvokerServiceAdapter invokerServiceAdapter;
 
@@ -46,17 +45,7 @@ public class RegistryService extends Service implements IRegistryService{
 	
 	@Override
 	public List<IAgentService> getAgents() throws Exception{
-		return getProxies(IAgentService.class, agents);
-	}
-	
-	@Override
-	public List<IClient> getClients() throws Exception{
-		return getProxies(IClient.class, clients);
-	}
-
-	@Override
-	public List<IRegistryService> getRegistries() throws Exception{
-		return getProxies(IRegistryService.class, registries);
+		return getProxies(IAgentService.class, agents.values().get());
 	}
 	
 	public RegistryConfiguration getRegistryConfiguration() {
@@ -66,42 +55,54 @@ public class RegistryService extends Service implements IRegistryService{
 	public void setRegistryConfiguration(RegistryConfiguration registryConfiguration) {
 		this.registryConfiguration = registryConfiguration;
 	}
+	
+	@Override
+	public RegistryInfo getInfo(){
+		return serviceInfo;
+	}
+	
+	@Override
+	protected RegistryInfo createServiceInfo() {
+		return new RegistryInfo();
+	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void start(){
 		try{
 			export();
-			init();
 			
 			List<Address> adr=new ArrayList<>();
 			for (RegistryConfiguration.Member a : registryConfiguration.getMember()){
 				adr.add(new Address(a.getHost(), a.getPort()));
 			}
-	
+
+			String localHost=(registryConfiguration.getHost()!=null ? registryConfiguration.getHost() : "localhost");
 			Properties properties=PropertyConfig.toPoperties(registryConfiguration.getProperties());
-			@SuppressWarnings("unchecked")
-			AtomixReplica.Builder builder=AtomixReplica.builder(new Address((registryConfiguration.getHost()!=null ? registryConfiguration.getHost() : "localhost"),registryConfiguration.getPort()),properties)
+			AtomixReplica.Builder builder=AtomixReplica.builder(new Address(localHost,registryConfiguration.getPort()),properties)
 													   .withStorage(new Storage("logs/"+registryConfiguration.getPort()))
 													   .withResourceTypes((Class)Map.class,Invoker.class);
-			atomixReplica=builder.build();
-			atomixReplica.serializer().register(ServiceAddress.class,1986);
-			atomixReplica.bootstrap(adr).join();
-	
-			registries=atomixReplica.getResource("registries",Map.class).get();//TODO put all strings in static final
-			agents=atomixReplica.getResource("agents",Map.class).get();
-			clients=atomixReplica.getResource("clients",Map.class).get();
-	
-			registries.put(serviceAddress,serviceAddress).get();
-			registries.get(serviceAddress).get();
+			atomix=builder.build();
+			configureSerializer();
+			atomix.bootstrap(adr).join();
+			configureResources();
 			
-			group=atomixReplica.getGroup("group").get();
-			invoker=atomixReplica.getResource("invoker",Invoker.class).get();
+			globalLookupId=atomix.getLong(KEY_LOOKUP_ID).get();
+			agents=atomix.getResource(KEY_AGENTS,Map.class).get();
+			group=atomix.getGroup(KEY_INVOKER_GROUP).get();
+			lookupResults=atomix.getResource(KEY_LOOKUP_RESULT,Map.class).get();
+
+			registries.put(serviceInfo.getPid(),serviceInfo).get();
 			
 			lookupService.setAgents(agents);
+			lookupService.setClients(clients);
+			lookupService.setLookupResultId(globalLookupId);
+			lookupService.setLookupResults(lookupResults);
 			
-			group.join(""+registryConfiguration.getPort()).get();
+			String id=localHost+":"+registryConfiguration.getPort();
+			group.join(id).get();
 			group.election().onElection(term -> {
-				if (term.leader().id().equals(""+registryConfiguration.getPort())){
+				if (term.leader().id().equals(id)){
 					invoker.setInvokerService(invokerServiceAdapter);
 				}
 			});
@@ -114,7 +115,16 @@ public class RegistryService extends Service implements IRegistryService{
 	
 	@Override
 	public void stop(){
-		unexport();
-		log.info("Registry stopped.");
+		try{
+			registries.remove(serviceInfo.getPid()).get();
+
+			atomix.shutdown().get();
+			
+			unexport();
+			
+			log.info("Registry stopped.");
+		}catch(Throwable th){
+			throw new FrameworkException(th.getMessage(), th);
+		}
 	}
 }

@@ -1,8 +1,8 @@
 package microsofia.framework.registry.lookup;
 
-import microsofia.framework.service.ServiceAddress;
-
 public interface ILookupService {
 
-	public ServiceAddress searchAgent() throws Exception;
+	public LookupResult searchAgent(LookupRequest request) throws Exception;
+
+	public void freeAgent(LookupResult result) throws Exception;
 }

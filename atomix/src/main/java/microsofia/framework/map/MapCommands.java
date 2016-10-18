@@ -1,7 +1,9 @@
 package microsofia.framework.map;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import io.atomix.catalyst.buffer.BufferInput;
 import io.atomix.catalyst.buffer.BufferOutput;
@@ -33,6 +35,20 @@ public class MapCommands {
 	    @Override
 	    public void readObject(BufferInput<?> buffer, Serializer serializer) {
 	    }
+	}
+	
+	public static class AddListener extends MapCommand<Void>{
+		private static final long serialVersionUID = 0L;
+		
+		public AddListener(){
+		}
+	}
+	
+	public static class RemoveListener extends MapCommand<Void>{
+		private static final long serialVersionUID = 0L;
+		
+		protected RemoveListener(){
+		}
 	}
 
 	public static abstract class MapQuery<V> implements Query<V>, CatalystSerializable {
@@ -403,6 +419,24 @@ public class MapCommands {
 		}
 	}
 
+	public static class FilterValue extends MapQuery<List<Object>> {
+		private static final long serialVersionUID = 0L;
+		private Function<Object,Boolean> function;
+		
+		public FilterValue(Function<Object,Boolean> function) {
+			this.function=function;
+	    }
+		
+		public FilterValue(Function<Object,Boolean> function,ConsistencyLevel consistency) {
+			super(consistency);
+			this.function=function;
+		}
+		
+		public Function<Object,Boolean> getFunction(){
+			return function;
+		}
+	}
+	
 	public static class Clear extends MapCommand<Void> {
 		private static final long serialVersionUID = 0L;
 
@@ -438,6 +472,9 @@ public class MapCommands {
 	      	registry.register(IsEmpty.class, 1943);
 	      	registry.register(Size.class, 1944);
 	      	registry.register(Clear.class, 1945);
+	      	registry.register(FilterValue.class, 1946);
+	      	registry.register(AddListener.class, 1947);
+	      	registry.register(RemoveListener.class, 1948);
 	    }
 	}
 }

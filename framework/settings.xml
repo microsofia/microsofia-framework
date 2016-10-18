@@ -122,6 +122,11 @@
    </application>
    <application name="agent1" type="agent">
 		<agent>
+			<servicename>test</servicename>
+			<lookup>
+				<multiplicity>one</multiplicity>
+				<weigth>2</weigth>
+			</lookup>
 			<registries>
 				<registry host="localhost" port="9992"/>
 				<registry host="localhost" port="9991"/>

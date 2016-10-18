@@ -10,16 +10,11 @@ import microsofia.container.application.PropertyConfig;
 import microsofia.framework.FrameworkException;
 import microsofia.framework.invoker.Invoker;
 import microsofia.framework.map.Map;
-import microsofia.framework.registry.IRegistryService;
 import microsofia.framework.registry.lookup.ILookupService;
 import microsofia.framework.service.Service;
-import microsofia.framework.service.ServiceAddress;
+import microsofia.framework.service.ServiceInfo;
 
-public abstract class AbstractClient extends Service{
-	protected AtomixClient atomixClient;
-	protected Map<ServiceAddress,ServiceAddress> registryAddresses;
-	protected Map<ServiceAddress,ServiceAddress> serviceAddresses;
-	protected Invoker invoker;
+public abstract class AbstractClient<SI extends ServiceInfo> extends Service<AtomixClient,SI>{
 	protected ILookupService lookupService;
 	
 	protected AbstractClient(){
@@ -27,43 +22,45 @@ public abstract class AbstractClient extends Service{
 	
 	public abstract ClientConfiguration getClientConfiguration();
 	
-	protected abstract String getServiceAddressMap();
+	protected abstract void internalStart() throws Exception;
 
+	protected abstract void internalStop() throws Exception;
+	
 	@Override
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void start(){
 		try{
 			export();
-			init();
-			
+
 			List<Address> adr=new ArrayList<>();
 			for (ClientConfiguration.Registry r : getClientConfiguration().getRegistry()){
 				adr.add(new Address(r.getHost(), r.getPort()));
 			}
-			
+
 			Properties properties=PropertyConfig.toPoperties(getClientConfiguration().getProperties());
-			atomixClient=AtomixClient.builder(properties).withResourceTypes((Class)Map.class,Invoker.class).build();
-			atomixClient.serializer().register(ServiceAddress.class,1986);
-			atomixClient.connect(adr).get();
-	
-			registryAddresses=atomixClient.getResource("registries", Map.class).get();
-			serviceAddresses=atomixClient.getResource(getServiceAddressMap(), Map.class).get();
-			invoker=atomixClient.getResource("invoker", Invoker.class).get();
+			atomix=AtomixClient.builder(properties).withResourceTypes((Class)Map.class,Invoker.class).build();
+			configureSerializer();
+			atomix.connect(adr).get();
+			configureResources();
+			
 			lookupService=invoker.getProxy(ILookupService.class);
 	
-			serviceAddresses.put(serviceAddress,serviceAddress).get();
-			serviceAddresses.get(serviceAddress).get();
+			internalStart();
 		}catch(Throwable th){
 			throw new FrameworkException(th.getMessage(), th);
 		}
 	}
 	
-	public List<IRegistryService> getRegistries() throws Exception{
-		return getProxies(IRegistryService.class, registryAddresses);
-	}
-	
 	@Override
 	public void stop(){
-		unexport();
+		try{
+			unexport();
+			
+			internalStop();
+			
+			atomix.close().get();
+		}catch(Throwable th){
+			throw new FrameworkException(th.getMessage(), th);
+		}
 	}
 }

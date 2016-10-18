@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -18,21 +19,53 @@ import io.atomix.resource.ResourceStateMachine;
 public class MapState extends ResourceStateMachine implements SessionListener {
 	private Map<Long,Set<Value>> valuesBySessionId;
 	private Map<Object,Value> valuesByKey;
+	private Map<Long,Commit<MapCommands.AddListener>> listeners;
 	
 	public MapState(Properties config) {
 		super(config);
 		valuesBySessionId=new HashMap<>();
 		valuesByKey=new HashMap<>();
+		listeners=new HashMap<>();
 	}
 
 	@Override
 	public void close(ServerSession session) {
+		Commit<MapCommands.AddListener> addCommit=listeners.remove(session.id());
+		if (addCommit!=null){
+			addCommit.close();
+		}
+
 		Set<Value> values=valuesBySessionId.remove(session.id());
 		if (values!=null){
 			for (Value value : values){
 				valuesByKey.remove(value.key);
+				notifyEntryRemoved(value.key,value.value);
 				value.commit.close();
 			}
+		}
+	}
+	
+	private void notifyEntryRemoved(Object key,Object value){
+		for (Commit<MapCommands.AddListener> listener : listeners.values()){
+			listener.session().publish("entryRemoved", new Object[]{key,value});
+		}
+	}
+	
+	public void addMapListener(Commit<MapCommands.AddListener> commit){
+		Commit<MapCommands.AddListener> oldCommit=listeners.put(commit.session().id(),commit);
+		if (oldCommit!=null){
+			oldCommit.close();
+		}
+	}
+	
+	public void removeMapListener(Commit<MapCommands.RemoveListener> commit){
+		try{
+			Commit<MapCommands.AddListener> addCommit=listeners.remove(commit.session().id());
+			if (addCommit!=null){
+				addCommit.close();
+			}
+		}finally{
+			commit.close();
 		}
 	}
 	
@@ -89,6 +122,7 @@ public class MapState extends ResourceStateMachine implements SessionListener {
 	private Value removeValue(Object key){
 		Value value = valuesByKey.remove(key);
 		if (value!=null){
+			notifyEntryRemoved(key,value.value);
 			Set<Value> values=valuesBySessionId.get(value.id);
 			values.remove(value);
 			if (values.isEmpty()){
@@ -215,6 +249,20 @@ public class MapState extends ResourceStateMachine implements SessionListener {
 			Collection<Object> values = new ArrayList<>();
 			for (Value value : valuesByKey.values()) {
 				values.add(value.value);
+			}
+			return values;
+		} finally {
+			commit.close();
+		}
+	}
+	
+	public List<Object> forEachValue(Commit<MapCommands.FilterValue> commit) {
+		try {
+			List<Object> values=new ArrayList<>();
+			for (Value value : valuesByKey.values()) {
+				if (commit.command().getFunction().apply(value.value)){
+					values.add(value.value);
+				}
 			}
 			return values;
 		} finally {

@@ -89,7 +89,12 @@ public class Invoker extends AbstractResource<Invoker> {
 	}
 	
 	private void notifyStart(){
-		invokerService.start();
+		executorService.submit(new Runnable() {
+			@Override
+			public void run() {
+				invokerService.start();
+			}
+		});
 	}
 	
 	private void invokeService(InvocationRequest request){
@@ -122,7 +127,12 @@ public class Invoker extends AbstractResource<Invoker> {
 	}
 
 	private void notifyStop(){
-		invokerService.stop();
+		executorService.submit(new Runnable() {
+			@Override
+			public void run() {
+				invokerService.stop();
+			}
+		});
 	}
 	
 	@SuppressWarnings("unchecked")
