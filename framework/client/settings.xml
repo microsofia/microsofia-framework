@@ -70,75 +70,21 @@
        </repository>
 	</repositories>
    
-   <application name="registry1" type="fwk.registry">
-		<registry port="9990">
-			<members>
-				<member host="localhost" port="9991"/>
-				<member host="localhost" port="9992"/>
-			</members>
-		</registry>
-		<endpoints>
-			<endpoint.msofiarmi name="fwk">
-				<client>
-				</client>
-				<server>
-					<host>localhost</host>
-					<port>9999</port>
-				</server>
-			</endpoint.msofiarmi>
-		</endpoints>
-   </application>
-   <application name="registry2" type="fwk.registry">
-		<registry port="9991">
-			<members>
-				<member host="localhost" port="9990"/>
-				<member host="localhost" port="9992"/>
-			</members>
-		</registry>
-		<endpoints>
-			<endpoint.msofiarmi name="fwk">
-				<server>
-					<host>localhost</host>
-					<port>9998</port>
-				</server>
-			</endpoint.msofiarmi>
-		</endpoints>
-   </application>
-   <application name="registry3" type="fwk.registry">
-		<registry port="9992">
-			<members>
-				<member host="localhost" port="9991"/>
-				<member host="localhost" port="9990"/>
-			</members>
-		</registry>
-		<endpoints>
-			<endpoint.msofiarmi name="fwk">
-				<server>
-					<host>localhost</host>
-					<port>9997</port>
-				</server>
-			</endpoint.msofiarmi>
-		</endpoints>
-   </application>
-   <application name="agent1" type="fwk.agent">
-		<agent>
-			<servicename>test</servicename>
-			<implementation>testagent</implementation>
-			<lookup>
-				<multiplicity>one</multiplicity>
-				<weigth>2</weigth>
-			</lookup>
+
+   <application name="client1" type="fwk.client">
+   		<client>
+   			<implementation>testclient</implementation>
 			<registries>
 				<registry host="localhost" port="9992"/>
 				<registry host="localhost" port="9991"/>
 				<registry host="localhost" port="9990"/>
 			</registries>
-		</agent>
+		</client>
 		<endpoints>
 			<endpoint.msofiarmi name="fwk">
 				<server>
 					<host>localhost</host>
-					<port>9995</port>
+					<port>9989</port>
 				</server>
 			</endpoint.msofiarmi>
 		</endpoints>

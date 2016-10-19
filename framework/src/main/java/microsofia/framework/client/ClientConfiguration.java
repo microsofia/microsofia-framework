@@ -25,6 +25,8 @@ public class ClientConfiguration{
 	@XmlElementWrapper(name="properties")
 	@XmlElement(name="property")
 	private List<PropertyConfig> properties;
+	@XmlElement(name="implementation")
+	private String implementation;
 	
 	public ClientConfiguration(){
 		properties=new ArrayList<>();
@@ -44,6 +46,14 @@ public class ClientConfiguration{
 
 	public void setProperties(List<PropertyConfig> properties) {
 		this.properties = properties;
+	}
+
+	public String getImplementation() {
+		return implementation;
+	}
+
+	public void setImplementation(String implementation) {
+		this.implementation = implementation;
 	}
 
 	@XmlAccessorType(XmlAccessType.FIELD)

@@ -1,17 +1,21 @@
 package microsofia.framework.agent;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
 import javax.inject.Inject;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import microsofia.container.module.endpoint.Server;
-import microsofia.framework.client.AbstractClient;
+import microsofia.framework.client.AbstractClientService;
 import microsofia.framework.map.Map;
 
 //TODO load the implementation of the agent
 @Server("fwk")
-public class AgentService extends AbstractClient<AgentInfo> implements IAgentService{
+public class AgentService extends AbstractClientService<AgentInfo> implements IAgentService{
 	private static Log log=LogFactory.getLog(AgentService.class);
 	@Inject
 	protected AgentConfiguration agentConfiguration;
@@ -45,10 +49,33 @@ public class AgentService extends AbstractClient<AgentInfo> implements IAgentSer
 
 		serviceInfo.setServiceName(agentConfiguration.getServiceName());
 		serviceInfo.setLookupConfiguration(agentConfiguration.getLookupConfiguration());
-		/*TODO check agent config:
-				->multiplicity coherent if 'one' used
-				->if there is a previous one with the same object@ then remove it from map ???
-		 */
+		
+		List<AgentInfo> others=agents.values(AgentFilters.byServiceName(agentConfiguration.getServiceName())).get();
+		if (others.size()>0){
+			//for multiplicity one, we make sure that there is only one agentservice running
+			if (agentConfiguration.getLookupConfiguration().getMultiplicity().equals(AgentLookupConfiguration.Multiplicity.one)){
+				if (others.size()>0){
+					throw new IllegalStateException("Cannot start the agent with multipliciy 'one' while other agents having the same servicename are running: "+others);
+				}
+			}
+
+			//for agent having the same host/port we remove it. Is it necessary?
+			List<CompletableFuture<AgentInfo>> futures=new ArrayList<>();
+			others.forEach(it->{
+				if (it.getObjectAddress().equals(serviceInfo.getObjectAddress())){
+					futures.add(agents.remove(it.getPid()));
+				}
+			});
+			
+			futures.forEach(it->{
+				try{
+					it.get();
+				}catch(Exception e){
+					log.debug(e,e);
+				}
+			});
+		}
+		
 		agents.put(serviceInfo.getPid(),serviceInfo).get();
 		
 		log.info("Agent ready...");

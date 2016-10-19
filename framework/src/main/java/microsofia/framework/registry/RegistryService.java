@@ -22,6 +22,7 @@ import microsofia.framework.agent.IAgentService;
 import microsofia.framework.invoker.Invoker;
 import microsofia.framework.invoker.InvokerServiceAdapter;
 import microsofia.framework.map.Map;
+import microsofia.framework.registry.lookup.ILookupService;
 import microsofia.framework.registry.lookup.LookupResult;
 import microsofia.framework.registry.lookup.LookupService;
 import microsofia.framework.service.Service;
@@ -41,6 +42,11 @@ public class RegistryService extends Service<AtomixReplica,RegistryInfo> impleme
 	public RegistryService(){
 		lookupService=new LookupService();
 		invokerServiceAdapter=new InvokerServiceAdapter(lookupService);
+	}
+	
+	@Override
+	public ILookupService getLookupService(){
+		return lookupService;
 	}
 	
 	@Override
@@ -78,9 +84,11 @@ public class RegistryService extends Service<AtomixReplica,RegistryInfo> impleme
 			}
 
 			String localHost=(registryConfiguration.getHost()!=null ? registryConfiguration.getHost() : "localhost");
+			String id=localHost+"/"+registryConfiguration.getPort();
+			
 			Properties properties=PropertyConfig.toPoperties(registryConfiguration.getProperties());
 			AtomixReplica.Builder builder=AtomixReplica.builder(new Address(localHost,registryConfiguration.getPort()),properties)
-													   .withStorage(new Storage("logs/"+registryConfiguration.getPort()))
+													   .withStorage(new Storage("logs/"+id))
 													   .withResourceTypes((Class)Map.class,Invoker.class);
 			atomix=builder.build();
 			configureSerializer();
@@ -94,12 +102,13 @@ public class RegistryService extends Service<AtomixReplica,RegistryInfo> impleme
 
 			registries.put(serviceInfo.getPid(),serviceInfo).get();
 			
+			lookupService.setExecutorService(executorService);
 			lookupService.setAgents(agents);
 			lookupService.setClients(clients);
 			lookupService.setLookupResultId(globalLookupId);
 			lookupService.setLookupResults(lookupResults);
 			
-			String id=localHost+":"+registryConfiguration.getPort();
+			
 			group.join(id).get();
 			group.election().onElection(term -> {
 				if (term.leader().id().equals(id)){
@@ -117,14 +126,20 @@ public class RegistryService extends Service<AtomixReplica,RegistryInfo> impleme
 	public void stop(){
 		try{
 			registries.remove(serviceInfo.getPid()).get();
-
-			atomix.shutdown().get();
-			
-			unexport();
-			
-			log.info("Registry stopped.");
 		}catch(Throwable th){
-			throw new FrameworkException(th.getMessage(), th);
+			log.debug(th.getMessage(), th);
 		}
+		try{
+			atomix.shutdown().get();
+		}catch(Throwable th){
+			log.debug(th.getMessage(), th);
+		}
+		try{			
+			unexport();
+		}catch(Throwable th){
+			log.debug(th.getMessage(), th);
+		}
+		super.stop();
+		log.info("Registry stopped.");
 	}
 }

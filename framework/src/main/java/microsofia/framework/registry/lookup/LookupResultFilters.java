@@ -56,7 +56,7 @@ public class LookupResultFilters {
 
 		@Override
 		public Boolean apply(LookupResult result) {
-			return result.getClientInfo().getPid()==pid;
+			return result.getLookupRequest().getClientInfo().getPid()==pid;
 		}
 
 		@Override

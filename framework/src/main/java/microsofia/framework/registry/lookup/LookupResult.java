@@ -6,11 +6,10 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import microsofia.framework.agent.AgentInfo;
-import microsofia.framework.client.ClientInfo;
 
 public class LookupResult implements Externalizable{
 	private long id;
-	private ClientInfo clientInfo;
+	private LookupRequest lookupRequest;
 	private AgentInfo agentInfo;
 	
 	public LookupResult(){
@@ -24,12 +23,12 @@ public class LookupResult implements Externalizable{
 		this.id=id;
 	}
 
-	public ClientInfo getClientInfo() {
-		return clientInfo;
+	public LookupRequest getLookupRequest() {
+		return lookupRequest;
 	}
 
-	public void setClientInfo(ClientInfo clientInfo) {
-		this.clientInfo = clientInfo;
+	public void setLookupRequest(LookupRequest lookupRequest) {
+		this.lookupRequest = lookupRequest;
 	}
 
 	public AgentInfo getAgentInfo() {
@@ -43,14 +42,14 @@ public class LookupResult implements Externalizable{
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeLong(id);
-		out.writeObject(clientInfo);
+		out.writeObject(lookupRequest);
 		out.writeObject(agentInfo);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		id=in.readLong();
-		clientInfo=(ClientInfo)in.readObject();
+		lookupRequest=(LookupRequest)in.readObject();
 		agentInfo=(AgentInfo)in.readObject();
 	}
 }

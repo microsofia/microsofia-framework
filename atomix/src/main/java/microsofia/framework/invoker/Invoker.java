@@ -21,11 +21,24 @@ public class Invoker extends AbstractResource<Invoker> {
 	private AtomicLong globalId;
 	private Map<Long,CompletableFuture<InvocationResponse>> futures;
 	private IInvokerService invokerService;
+	private boolean closeExecutor;
 	private ExecutorService executorService;
 
 	public Invoker(CopycatClient client, Properties options) {
 		super(client, options);
 		futures=new Hashtable<>();
+	}
+	
+	public void setExecutorService(ExecutorService executorService){
+		this.executorService=executorService;
+	}
+	
+	private synchronized ExecutorService getExecutorService(){
+		if (executorService==null){
+			closeExecutor=true;
+			executorService=Executors.newCachedThreadPool();
+		}
+		return executorService;
 	}
 	
 	@Override
@@ -45,7 +58,11 @@ public class Invoker extends AbstractResource<Invoker> {
 
 	@Override
 	public CompletableFuture<Void> close() {
-		return super.close().thenRun(executorService::shutdown);
+		return super.close().thenRun(()->{
+			if (closeExecutor){
+				executorService.shutdown();
+			}
+		});
 	}
 	
 	private void initialize(){
@@ -64,8 +81,6 @@ public class Invoker extends AbstractResource<Invoker> {
 			    futures.clear();
 			}
 		});
-		
-		executorService=Executors.newCachedThreadPool();
 	}
 	
 	public CompletableFuture<Void> setInvokerService(IInvokerService is){
@@ -89,7 +104,7 @@ public class Invoker extends AbstractResource<Invoker> {
 	}
 	
 	private void notifyStart(){
-		executorService.submit(new Runnable() {
+		getExecutorService().submit(new Runnable() {
 			@Override
 			public void run() {
 				invokerService.start();
@@ -98,7 +113,7 @@ public class Invoker extends AbstractResource<Invoker> {
 	}
 	
 	private void invokeService(InvocationRequest request){
-		executorService.submit(new Runnable() {
+		getExecutorService().submit(new Runnable() {
 			@Override
 			public void run() {
 				invokerService.invoke(Invoker.this,request);
@@ -107,7 +122,7 @@ public class Invoker extends AbstractResource<Invoker> {
 	}
 	
 	private void stopInvocation(InvocationRequest request){
-		executorService.submit(new Runnable() {
+		getExecutorService().submit(new Runnable() {
 			@Override
 			public void run() {
 				invokerService.stopInvocation(Invoker.this,request);
@@ -127,7 +142,7 @@ public class Invoker extends AbstractResource<Invoker> {
 	}
 
 	private void notifyStop(){
-		executorService.submit(new Runnable() {
+		getExecutorService().submit(new Runnable() {
 			@Override
 			public void run() {
 				invokerService.stop();

@@ -47,7 +47,7 @@ public class MapCommands {
 	public static class RemoveListener extends MapCommand<Void>{
 		private static final long serialVersionUID = 0L;
 		
-		protected RemoveListener(){
+		public RemoveListener(){
 		}
 	}
 
@@ -422,6 +422,9 @@ public class MapCommands {
 	public static class FilterValue extends MapQuery<List<Object>> {
 		private static final long serialVersionUID = 0L;
 		private Function<Object,Boolean> function;
+		
+		public FilterValue() {
+	    }
 		
 		public FilterValue(Function<Object,Boolean> function) {
 			this.function=function;

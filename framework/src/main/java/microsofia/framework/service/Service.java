@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 
@@ -20,9 +22,10 @@ import microsofia.container.module.endpoint.Unexport;
 import microsofia.container.module.endpoint.msofiarmi.MSofiaRMIServer;
 import microsofia.framework.agent.AgentFilters;
 import microsofia.framework.agent.AgentInfo;
+import microsofia.framework.agent.AgentLookupConfiguration;
 import microsofia.framework.agent.IAgentService;
 import microsofia.framework.client.ClientInfo;
-import microsofia.framework.client.IClient;
+import microsofia.framework.client.IClientService;
 import microsofia.framework.invoker.Invoker;
 import microsofia.framework.map.Map;
 import microsofia.framework.registry.IRegistryService;
@@ -30,7 +33,6 @@ import microsofia.framework.registry.RegistryInfo;
 import microsofia.framework.registry.lookup.LookupRequest;
 import microsofia.framework.registry.lookup.LookupResult;
 import microsofia.framework.registry.lookup.LookupResultFilters;
-import microsofia.framework.registry.lookup.LookupService;
 import microsofia.rmi.ObjectAddress;
 
 @Server("fwk")
@@ -52,6 +54,7 @@ public abstract class Service<A extends Atomix,SI extends ServiceInfo> implement
 	protected DistributedLong serviceId;
 	protected Map<Long, RegistryInfo> registries;
 	protected Map<Long, ClientInfo> clients;
+	protected ExecutorService executorService;
 	protected Invoker invoker;
 	
 	public Service(){
@@ -59,7 +62,9 @@ public abstract class Service<A extends Atomix,SI extends ServiceInfo> implement
 	
 	public abstract void start();
 	
-	public abstract void stop();
+	public void stop(){
+		executorService.shutdown();
+	}
 	
 	protected abstract SI createServiceInfo();
 	
@@ -75,6 +80,7 @@ public abstract class Service<A extends Atomix,SI extends ServiceInfo> implement
 		atomix.serializer().register(LookupResultFilters.LookupResultByAgentPidFilter.class,1981);
 		atomix.serializer().register(LookupResultFilters.LookupResultByClientPidFilter.class,1980);
 		atomix.serializer().register(LookupResultFilters.LookupResultByServiceNameFilter.class,1979);
+		atomix.serializer().register(AgentLookupConfiguration.class,1978);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -82,7 +88,10 @@ public abstract class Service<A extends Atomix,SI extends ServiceInfo> implement
 		serviceId=atomix.getLong(KEY_SERVICE_ID).get();
 		registries=atomix.getResource(KEY_REGISTRIES, Map.class).get();
 		clients=atomix.getResource(KEY_CLIENTS,Map.class).get();
+		
+		executorService=Executors.newCachedThreadPool();
 		invoker=atomix.getResource(KEY_INVOKER,Invoker.class).get();
+		invoker.setExecutorService(executorService);
 
 		serviceInfo=createServiceInfo();
 		serviceInfo.setObjectAddress(((MSofiaRMIServer)server).getLocalServer().getObjectAddress(this));
@@ -144,8 +153,8 @@ public abstract class Service<A extends Atomix,SI extends ServiceInfo> implement
 		return getProxies(IRegistryService.class, registries.values().get());
 	}
 	
-	public List<IClient> getClients() throws Exception{
-		return getProxies(IClient.class, clients.values().get());
+	public List<IClientService> getClients() throws Exception{
+		return getProxies(IClientService.class, clients.values().get());
 	}
 	
 	public <T> T getProxy(Class<T> c,ServiceInfo si){
@@ -156,8 +165,8 @@ public abstract class Service<A extends Atomix,SI extends ServiceInfo> implement
 		return getProxy(IAgentService.class, sa);
 	}
 
-	public IClient getClient(ServiceInfo sa){
-		return getProxy(IClient.class, sa);
+	public IClientService getClient(ServiceInfo sa){
+		return getProxy(IClientService.class, sa);
 	}
 
 	public IRegistryService getRegistryService(ServiceInfo sa){

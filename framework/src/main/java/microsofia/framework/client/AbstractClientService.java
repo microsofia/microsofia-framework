@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import io.atomix.AtomixClient;
 import io.atomix.catalyst.transport.Address;
 import microsofia.container.application.PropertyConfig;
@@ -14,13 +17,18 @@ import microsofia.framework.registry.lookup.ILookupService;
 import microsofia.framework.service.Service;
 import microsofia.framework.service.ServiceInfo;
 
-public abstract class AbstractClient<SI extends ServiceInfo> extends Service<AtomixClient,SI>{
+public abstract class AbstractClientService<SI extends ServiceInfo> extends Service<AtomixClient,SI>{
+	private static Log log=LogFactory.getLog(AbstractClientService.class);
 	protected ILookupService lookupService;
 	
-	protected AbstractClient(){
+	protected AbstractClientService(){
 	}
 	
 	public abstract ClientConfiguration getClientConfiguration();
+	
+	public ILookupService getLookupService(){
+		return lookupService;
+	}
 	
 	protected abstract void internalStart() throws Exception;
 
@@ -55,12 +63,19 @@ public abstract class AbstractClient<SI extends ServiceInfo> extends Service<Ato
 	public void stop(){
 		try{
 			unexport();
-			
+		}catch(Throwable th){
+			log.debug(th,th);
+		}
+		try{
 			internalStop();
-			
+		}catch(Throwable th){
+			log.debug(th,th);
+		}
+		try{	
 			atomix.close().get();
 		}catch(Throwable th){
-			throw new FrameworkException(th.getMessage(), th);
+			log.debug(th,th);
 		}
+		super.stop();
 	}
 }
