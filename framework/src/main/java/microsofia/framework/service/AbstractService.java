@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 
@@ -36,8 +35,8 @@ import microsofia.framework.registry.lookup.LookupResultFilters;
 import microsofia.rmi.ObjectAddress;
 
 @Server("fwk")
-public abstract class Service<A extends Atomix,SI extends ServiceInfo> implements IService{
-	private static Log log=LogFactory.getLog(Service.class);
+public abstract class AbstractService<A extends Atomix,SI extends ServiceInfo> implements IService{
+	private static Log log=LogFactory.getLog(AbstractService.class);
 	protected static final String KEY_REGISTRIES 		= "registries";
 	protected static final String KEY_AGENTS 	  		= "agents";
 	protected static final String KEY_CLIENTS 	  		= "clients";
@@ -54,10 +53,11 @@ public abstract class Service<A extends Atomix,SI extends ServiceInfo> implement
 	protected DistributedLong serviceId;
 	protected Map<Long, RegistryInfo> registries;
 	protected Map<Long, ClientInfo> clients;
+	@Inject
 	protected ExecutorService executorService;
 	protected Invoker invoker;
 	
-	public Service(){
+	public AbstractService(){
 	}
 	
 	public abstract void start();
@@ -76,10 +76,10 @@ public abstract class Service<A extends Atomix,SI extends ServiceInfo> implement
 		atomix.serializer().register(ClientInfo.class,1985);
 		atomix.serializer().register(LookupRequest.class,1984);
 		atomix.serializer().register(LookupResult.class,1983);
-		atomix.serializer().register(AgentFilters.ServiceNameFilter.class,1982);
+		atomix.serializer().register(AgentFilters.QueueFilter.class,1982);
 		atomix.serializer().register(LookupResultFilters.LookupResultByAgentPidFilter.class,1981);
 		atomix.serializer().register(LookupResultFilters.LookupResultByClientPidFilter.class,1980);
-		atomix.serializer().register(LookupResultFilters.LookupResultByServiceNameFilter.class,1979);
+		atomix.serializer().register(LookupResultFilters.LookupResultByQueueFilter.class,1979);
 		atomix.serializer().register(AgentLookupConfiguration.class,1978);
 	}
 	
@@ -89,7 +89,6 @@ public abstract class Service<A extends Atomix,SI extends ServiceInfo> implement
 		registries=atomix.getResource(KEY_REGISTRIES, Map.class).get();
 		clients=atomix.getResource(KEY_CLIENTS,Map.class).get();
 		
-		executorService=Executors.newCachedThreadPool();
 		invoker=atomix.getResource(KEY_INVOKER,Invoker.class).get();
 		invoker.setExecutorService(executorService);
 

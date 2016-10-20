@@ -13,7 +13,6 @@ import microsofia.container.module.endpoint.Server;
 import microsofia.framework.client.AbstractClientService;
 import microsofia.framework.map.Map;
 
-//TODO load the implementation of the agent
 @Server("fwk")
 public class AgentService extends AbstractClientService<AgentInfo> implements IAgentService{
 	private static Log log=LogFactory.getLog(AgentService.class);
@@ -47,15 +46,15 @@ public class AgentService extends AbstractClientService<AgentInfo> implements IA
 	protected void internalStart() throws Exception{
 		agents=atomix.getResource(KEY_AGENTS, Map.class).get();
 
-		serviceInfo.setServiceName(agentConfiguration.getServiceName());
+		serviceInfo.setQueue(agentConfiguration.getQueue());
 		serviceInfo.setLookupConfiguration(agentConfiguration.getLookupConfiguration());
 		
-		List<AgentInfo> others=agents.values(AgentFilters.byServiceName(agentConfiguration.getServiceName())).get();
+		List<AgentInfo> others=agents.values(AgentFilters.byQueue(agentConfiguration.getQueue())).get();
 		if (others.size()>0){
 			//for multiplicity one, we make sure that there is only one agentservice running
 			if (agentConfiguration.getLookupConfiguration().getMultiplicity().equals(AgentLookupConfiguration.Multiplicity.one)){
 				if (others.size()>0){
-					throw new IllegalStateException("Cannot start the agent with multipliciy 'one' while other agents having the same servicename are running: "+others);
+					throw new IllegalStateException("Cannot start the agent with multipliciy 'one' while other agents having the same queue are running: "+others);
 				}
 			}
 

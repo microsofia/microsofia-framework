@@ -4,10 +4,18 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
+import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import javax.inject.Singleton;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Element;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 
 import microsofia.container.ContainerBuilder;
 import microsofia.container.ContainerImpl;
@@ -25,11 +33,15 @@ import microsofia.framework.registry.RegistryConfiguration;
 import microsofia.framework.registry.RegistryService;
 
 public class Framework {
-	protected ContainerImpl container;
+	private static Log log=LogFactory.getLog(Framework.class);
+	private static final String FWK_REGISTRY = "fwk.registry";
+	private static final String FWK_AGENT = "fwk.agent";
+	private static final String FWK_CLIENT = "fwk.client";
 	protected String[] args;
 	protected ApplicationConfig applicationConfig;
-	protected IServiceProvider serviceProvider;
+	protected Service service;
 	protected DefaultApplication application;
+	protected ContainerImpl container;
 	
 	public Framework(){
 	}
@@ -44,7 +56,7 @@ public class Framework {
 		return this;
 	}
 	
-	private void createClientProvider(){
+	private void createClient(){
 		ClientConfiguration clientConfiguration;
 		try{
 			clientConfiguration=ClientConfiguration.createClientConfiguration(applicationConfig.getElement());
@@ -55,32 +67,38 @@ public class Framework {
 			throw new FrameworkException("Missing client configuration in settings file.");
 		}
 		
-		ServiceLoader<IClientProvider> serviceLoader=ServiceLoader.load(IClientProvider.class, getClass().getClassLoader());
-		Iterator<IClientProvider> iterator=serviceLoader.iterator();
+		ServiceLoader<Client> serviceLoader=ServiceLoader.load(Client.class, getClass().getClassLoader());
+		Iterator<Client> iterator=serviceLoader.iterator();
 
 		while (iterator.hasNext()){
-			IClientProvider c=iterator.next();
+			Client c=iterator.next();
 			if (c.getImplementation().equals(clientConfiguration.getImplementation())){
-				serviceProvider=c;
+				service=c;
 				break;
 			}
 		}
-		if (serviceProvider==null){
+		if (service==null){
 			throw new FrameworkException("Couldn't load client configuration with implementation "+clientConfiguration.getImplementation());
 		}
 		
 		application.addModule(new AbstractModule() {
 
+			@Singleton
+			@Provides
+			public ExecutorService getExecutorService(){
+				return Executors.newCachedThreadPool();
+			}
+			
 			@Override
 			protected void configure() {
 				bind(IClientService.class).to(ClientService.class).asEagerSingleton();
 				bind(ClientConfiguration.class).toInstance(clientConfiguration);
 			}
 		});
-		application.addClass(ClientService.class);
+		application.parseClass(ClientService.class);
 	}
 	
-	private void createAgentProvider(){
+	private void createAgent(){
 		AgentConfiguration agentConfiguration;
 		try{
 			agentConfiguration=AgentConfiguration.createAgentConfiguration(applicationConfig.getElement());
@@ -91,33 +109,38 @@ public class Framework {
 			throw new FrameworkException("Missing agent configuration in settings file.");
 		}
 		
-		ServiceLoader<IAgentProvider> serviceLoader=ServiceLoader.load(IAgentProvider.class, getClass().getClassLoader());
-		Iterator<IAgentProvider> iterator=serviceLoader.iterator();
+		ServiceLoader<Agent> serviceLoader=ServiceLoader.load(Agent.class, getClass().getClassLoader());
+		Iterator<Agent> iterator=serviceLoader.iterator();
 
 		while (iterator.hasNext()){
-			IAgentProvider c=iterator.next();
+			Agent c=iterator.next();
 			if (c.getImplementation().equals(agentConfiguration.getImplementation())){
-				serviceProvider=c;
+				service=c;
 				break;
 			}
 		}
-		if (serviceProvider==null){
+		if (service==null){
 			throw new FrameworkException("Couldn't load agent configuration with implementation "+agentConfiguration.getImplementation());
 		}
 		
 		application.addModule(new AbstractModule() {
 
+			@Singleton
+			@Provides
+			public ExecutorService getExecutorService(){
+				return Executors.newCachedThreadPool();
+			}
+			
 			@Override
 			protected void configure() {
 				bind(IAgentService.class).to(AgentService.class).asEagerSingleton();
-				
 				bind(AgentConfiguration.class).toInstance(agentConfiguration);
 			}
 		});
-		application.addClass(AgentService.class);
+		application.parseClass(AgentService.class);
 	}
 	
-	private void createRegistryProvider(){
+	private void createRegistry(){
 		RegistryConfiguration registryConfiguration;
 		try{
 			registryConfiguration=RegistryConfiguration.readFrom(applicationConfig.getElement());
@@ -136,21 +159,21 @@ public class Framework {
 			}
 		});
 		
-		serviceProvider=new RegistryProvider();
+		service=new Registry();
 	}
 
 	public void start() throws Throwable{
-		if (applicationConfig.getType().equals("fwk.client")){
+		if (applicationConfig.getType().equals(FWK_CLIENT)){
 			application=new DefaultApplication(applicationConfig.getType());
-			createClientProvider();
+			createClient();
 
-		}else if (applicationConfig.getType().equals("fwk.agent")){
+		}else if (applicationConfig.getType().equals(FWK_AGENT)){
 			application=new DefaultApplication(applicationConfig.getType());
-			createAgentProvider();
+			createAgent();
 			
-		}else if (applicationConfig.getType().equals("fwk.registry")){
+		}else if (applicationConfig.getType().equals(FWK_REGISTRY)){
 			application=new DefaultApplication(applicationConfig.getType());
-			createRegistryProvider();
+			createRegistry();
 			
 		}else{
 			throw new IllegalArgumentException("Framework cannot start an application which is not of type fwk.client, fwk.agent or fwk.registry. Found:"+applicationConfig.getType());
@@ -162,25 +185,23 @@ public class Framework {
 
 		DefaultApplicationProvider provider=new DefaultApplicationProvider();
 
-		if (serviceProvider.getInjectedClasses()!=null){
-			serviceProvider.getInjectedClasses().forEach(application::addClass);
+		if (service.getInjectedClasses()!=null){
+			service.getInjectedClasses().forEach(application::parseClass);
 		}
-		if (serviceProvider.getGuiceModules()!=null){
-			serviceProvider.getGuiceModules().forEach(application::addModule);
+		if (service.getGuiceModules()!=null){
+			service.getGuiceModules().forEach(application::addModule);
 		}
 		
 		provider.addApplication(application);
 		container.addApplicationProvider(provider);
-		container.start();
-		container.injectMembers(serviceProvider);
 
-		//ClientService clientService=container.getInstance(ClientService.class);
-		//TODO start it if not started ? clientService.start();		
-		serviceProvider.start();
+		container.start();
+		container.injectMembers(service);
+		service.start();
 	}
 	
 	public void stop() throws Throwable{
-		serviceProvider.stop();
+		service.stop();
 		container.stop();
 	}
 	
@@ -190,9 +211,10 @@ public class Framework {
 			apps=ApplicationConfig.readFrom(element);
 		}
 		if (apps==null || apps.length==0){
-			throw new IllegalStateException("No application having as a type 'fwk.client', 'fwk.agent' or 'fwk.registry' is configured to start. Please check your settings file.");
+			throw new IllegalStateException("No application found. Please check your settings file.");
 		}
 		
+		Vector<Throwable> ths=new Vector<>();
 		List<Thread> threads=new ArrayList<>();
 		for (ApplicationConfig c : apps){
 			Thread th=new Thread(){
@@ -202,8 +224,9 @@ public class Framework {
 						fwk.arguments(argv).applicationConfig(c);
 						fwk.start();
 					} catch (Throwable e) {
-						// TODO 
 						e.printStackTrace();
+						log.error(e,e);
+						ths.add(e);
 					}
 				}
 			};
@@ -215,8 +238,11 @@ public class Framework {
 			try{
 				it.join();
 			}catch(Exception e){
-				e.printStackTrace();
+				log.error(e,e);
 			}
 		});
+		if (ths.size()>0){
+			throw ths.get(0);//should throw all of them
+		}
 	}
 }

@@ -8,34 +8,34 @@ import java.util.function.Function;
 
 public class AgentFilters {
 
-	public static Function<AgentInfo,Boolean> byServiceName(String sn){
-		return new ServiceNameFilter(sn);
+	public static Function<AgentInfo,Boolean> byQueue(String sn){
+		return new QueueFilter(sn);
 	}
 	
-	public static class ServiceNameFilter implements Function<AgentInfo,Boolean>,Externalizable{
+	public static class QueueFilter implements Function<AgentInfo,Boolean>,Externalizable{
 		private static final long serialVersionUID = 0L;
-		private String serviceName;
+		private String queue;
 
-		public ServiceNameFilter(){
+		public QueueFilter(){
 		}
 		
-		public ServiceNameFilter(String serviceName){
-			this.serviceName=serviceName;
+		public QueueFilter(String queue){
+			this.queue=queue;
 		}
 
 		@Override
 		public Boolean apply(AgentInfo info) {
-			return info.getServiceName().equals(serviceName);
+			return info.getQueue().equals(queue);
 		}
 
 		@Override
 		public void writeExternal(ObjectOutput out) throws IOException {
-			out.writeUTF(serviceName);
+			out.writeUTF(queue);
 		}
 
 		@Override
 		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-			serviceName=in.readUTF();
+			queue=in.readUTF();
 		}
 	}
 }

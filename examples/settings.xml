@@ -8,7 +8,7 @@
   
   <dependency>
   	<groupId>com.github.microsofia</groupId>
-	<artifactId>microsofia-framework</artifactId>
+	<artifactId>microsofia-framework-examples</artifactId>
 	<version>1.0</version>
 
   </dependency>
@@ -71,10 +71,10 @@
 	</repositories>
    
    <application name="registry1" type="fwk.registry">
-		<registry port="9990">
+		<registry port="8990" host="localhost">
 			<members>
-				<member host="localhost" port="9991"/>
-				<member host="localhost" port="9992"/>
+				<member host="localhost" port="8991"/>
+				<member host="localhost" port="8992"/>
 			</members>
 		</registry>
 		<endpoints>
@@ -83,62 +83,62 @@
 				</client>
 				<server>
 					<host>localhost</host>
-					<port>9999</port>
+					<port>8999</port>
 				</server>
 			</endpoint.msofiarmi>
 		</endpoints>
    </application>
    <application name="registry2" type="fwk.registry">
-		<registry port="9991">
+		<registry port="8991" host="localhost">
 			<members>
-				<member host="localhost" port="9990"/>
-				<member host="localhost" port="9992"/>
+				<member host="localhost" port="8990"/>
+				<member host="localhost" port="8992"/>
 			</members>
 		</registry>
 		<endpoints>
 			<endpoint.msofiarmi name="fwk">
 				<server>
 					<host>localhost</host>
-					<port>9998</port>
+					<port>8998</port>
 				</server>
 			</endpoint.msofiarmi>
 		</endpoints>
    </application>
    <application name="registry3" type="fwk.registry">
-		<registry port="9992">
+		<registry port="8992" host="localhost">
 			<members>
-				<member host="localhost" port="9991"/>
-				<member host="localhost" port="9990"/>
+				<member host="localhost" port="8991"/>
+				<member host="localhost" port="8990"/>
 			</members>
 		</registry>
 		<endpoints>
 			<endpoint.msofiarmi name="fwk">
 				<server>
 					<host>localhost</host>
-					<port>9997</port>
+					<port>8997</port>
 				</server>
 			</endpoint.msofiarmi>
 		</endpoints>
    </application>
    <application name="agent1" type="fwk.agent">
 		<agent>
-			<servicename>test</servicename>
+			<queue>test</queue>
 			<implementation>testagent</implementation>
 			<lookup>
 				<multiplicity>one</multiplicity>
 				<weigth>2</weigth>
 			</lookup>
 			<registries>
-				<registry host="localhost" port="9992"/>
-				<registry host="localhost" port="9991"/>
-				<registry host="localhost" port="9990"/>
+				<registry host="localhost" port="8992"/>
+				<registry host="localhost" port="8991"/>
+				<registry host="localhost" port="8990"/>
 			</registries>
 		</agent>
 		<endpoints>
 			<endpoint.msofiarmi name="fwk">
 				<server>
 					<host>localhost</host>
-					<port>9995</port>
+					<port>8995</port>
 				</server>
 			</endpoint.msofiarmi>
 		</endpoints>

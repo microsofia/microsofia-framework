@@ -1,9 +1,9 @@
 package microsofia.framework;
 
-public interface IAgentProvider extends IServiceProvider{
+public interface Client extends Service{
 
 	@Override
 	default public Type getType(){
-		return Type.AGENT;
+		return Type.CLIENT;
 	}
 }

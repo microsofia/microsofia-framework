@@ -2,22 +2,29 @@ package microsofia.framework;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 
-import microsofia.framework.registry.IRegistryService;
+import microsofia.framework.invoker.InvokerServiceAdapter;
 import microsofia.framework.registry.RegistryConfiguration;
 import microsofia.framework.registry.RegistryService;
+import microsofia.framework.registry.lookup.LockFactory;
+import microsofia.framework.registry.lookup.LookupService;
+import microsofia.framework.registry.lookup.strategy.CompositeStrategy;
 
-public class RegistryProvider implements IServiceProvider{
+public class Registry implements Service{
 	@Inject
 	private RegistryService registryService;
 	@Inject
 	private RegistryConfiguration registryConfiguration;
 
-	public RegistryProvider(){
+	public Registry(){
 	}
 	
 	public RegistryService getRegistryService() {
@@ -48,7 +55,42 @@ public class RegistryProvider implements IServiceProvider{
 
 	@Override
 	public List<AbstractModule> getGuiceModules() {
-		return null;
+		return Arrays.asList(new AbstractModule() {
+			
+			@Override
+			protected void configure() {
+			}
+			
+			@Singleton
+			@Provides
+			public ExecutorService getExecutorService(){
+				return Executors.newCachedThreadPool();
+			}
+			
+			@Singleton
+			@Provides
+			public LookupService getLookupService(CompositeStrategy compositeStrategy){
+				return new LookupService(compositeStrategy);
+			}
+			
+			@Singleton
+			@Provides
+			public CompositeStrategy getCompositeStrategy(){
+				return new CompositeStrategy();
+			}
+			
+			@Singleton
+			@Provides
+			public LockFactory getLockFactory(){
+				return new LockFactory();
+			}
+			
+			@Singleton
+			@Provides
+			public InvokerServiceAdapter getInvokerServiceAdapter(LookupService lookupService){
+				return new InvokerServiceAdapter(lookupService);
+			}
+		});
 	}
 
 	@Override

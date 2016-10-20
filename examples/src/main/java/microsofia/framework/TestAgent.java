@@ -8,11 +8,11 @@ import com.google.inject.AbstractModule;
 
 import microsofia.framework.agent.AgentService;
 
-public class TestAgentProvider implements IAgentProvider {
+public class TestAgent implements Agent {
 	@Inject
 	private AgentService agentService;
 	
-	public TestAgentProvider(){
+	public TestAgent(){
 	}
 
 	@Override

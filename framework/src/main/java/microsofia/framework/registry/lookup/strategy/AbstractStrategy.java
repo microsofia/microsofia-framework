@@ -24,13 +24,13 @@ public abstract class AbstractStrategy {
 		this.lookupResults=lookupResults;
 	}
 	
-	//filtering on servicename
+	//filtering on queue
 	public List<AgentInfo> filterAgents(LookupRequest lookupRequest) throws Exception{
-		return agents.values(AgentFilters.byServiceName(lookupRequest.getServiceName())).get();
+		return agents.values(AgentFilters.byQueue(lookupRequest.getQueue())).get();
 	}
 	
 	public List<LookupResult> filterLookupResults(LookupRequest lookupRequest) throws Exception{
-		return lookupResults.values(LookupResultFilters.byServiceName(lookupRequest.getServiceName())).get();
+		return lookupResults.values(LookupResultFilters.byQueue(lookupRequest.getQueue())).get();
 	}
 	
 	public abstract AgentInfo lookup(LookupRequest lookupRequest,List<AgentInfo> agentInfos) throws Exception;

@@ -1,7 +1,5 @@
 package microsofia.framework.client;
 
-import java.util.List;
-
 import javax.inject.Inject;
 
 import org.apache.commons.logging.Log;
@@ -9,7 +7,6 @@ import org.apache.commons.logging.LogFactory;
 
 import microsofia.container.module.endpoint.Server;
 
-//TODO can either run a main client/agent/registry or be embedded
 @Server("fwk")
 public class ClientService extends AbstractClientService<ClientInfo> implements IClientService{
 	private Log log=LogFactory.getLog(ClientService.class);

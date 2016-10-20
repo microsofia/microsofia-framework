@@ -14,20 +14,20 @@ import microsofia.framework.client.ClientConfiguration;
 @XmlRootElement(name="agent")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AgentConfiguration extends ClientConfiguration{
-	@XmlElement(name="servicename")
-	private String serviceName;
+	@XmlElement(name="queue")
+	private String queue;
 	@XmlElement(name="lookup")
 	private AgentLookupConfiguration lookupConfiguration;
 	
 	public AgentConfiguration(){
 	}
 	
-	public String getServiceName() {
-		return serviceName;
+	public String getQueue() {
+		return queue;
 	}
 
-	public void setServiceName(String serviceName) {
-		this.serviceName = serviceName;
+	public void setQueue(String queue) {
+		this.queue = queue;
 	}
 
 	public AgentLookupConfiguration getLookupConfiguration() {

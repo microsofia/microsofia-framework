@@ -25,10 +25,10 @@ import microsofia.framework.map.Map;
 import microsofia.framework.registry.lookup.ILookupService;
 import microsofia.framework.registry.lookup.LookupResult;
 import microsofia.framework.registry.lookup.LookupService;
-import microsofia.framework.service.Service;
+import microsofia.framework.service.AbstractService;
 
 @Server("fwk")
-public class RegistryService extends Service<AtomixReplica,RegistryInfo> implements IRegistryService{
+public class RegistryService extends AbstractService<AtomixReplica,RegistryInfo> implements IRegistryService{
 	private static final Log log=LogFactory.getLog(RegistryService.class);
 	@Inject
 	protected RegistryConfiguration registryConfiguration;
@@ -36,12 +36,12 @@ public class RegistryService extends Service<AtomixReplica,RegistryInfo> impleme
 	protected DistributedGroup group;
 	protected Map<Long, AgentInfo> agents;
 	protected Map<Long,LookupResult> lookupResults;
+	@Inject
 	protected LookupService lookupService;
+	@Inject
 	protected InvokerServiceAdapter invokerServiceAdapter;
 
 	public RegistryService(){
-		lookupService=new LookupService();
-		invokerServiceAdapter=new InvokerServiceAdapter(lookupService);
 	}
 	
 	@Override
@@ -118,6 +118,7 @@ public class RegistryService extends Service<AtomixReplica,RegistryInfo> impleme
 			
 			log.info("Registry ready...");
 		}catch(Throwable th){
+			th.printStackTrace();
 			throw new FrameworkException(th.getMessage(), th);
 		}
 	}

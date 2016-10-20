@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.google.inject.AbstractModule;
 
-public interface IServiceProvider {
+public interface Service {
 	public enum Type{CLIENT, AGENT, REGISTRY};
 
 	public Type getType();

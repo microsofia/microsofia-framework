@@ -12,11 +12,11 @@ import microsofia.framework.registry.IRegistryService;
 import microsofia.framework.registry.lookup.LookupRequest;
 import microsofia.framework.registry.lookup.LookupResult;
 
-public class TestClientProvider implements IClientProvider {
+public class TestClient implements Client {
 	@Inject
 	private ClientService clientService;
 	
-	public TestClientProvider(){
+	public TestClient(){
 	}
 	
 	@Override
@@ -36,12 +36,14 @@ public class TestClientProvider implements IClientProvider {
 
 	@Override
 	public void start() throws Exception {
+		System.out.println("client jsut started");
 		clientService.start();
 		Thread.sleep(5000);
 
 		LookupRequest request=new LookupRequest();
 		request.setClientInfo(clientService.getInfo());
-		request.setServiceName("test");
+		request.setQueue("test");
+		System.out.println("before looking for agents");
 		LookupResult result=clientService.getLookupService().searchAgent(request);
 		if (result.getAgentInfo()==null){
 			System.out.println("Allocation worked!!!!!!!!!! no agent found!");

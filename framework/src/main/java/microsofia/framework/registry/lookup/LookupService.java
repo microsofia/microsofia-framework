@@ -6,6 +6,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.inject.Inject;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -19,18 +21,20 @@ import microsofia.framework.registry.lookup.strategy.CompositeStrategy;
 public class LookupService implements InvokerServiceAdapter.IStartable,InvokerServiceAdapter.IStoppable,ILookupService{
 	private static Log log=LogFactory.getLog(LookupService.class);
 	protected AtomicBoolean canInvoke;
+	@Inject
 	protected LockFactory lockFactory;
+	@Inject
 	protected CompositeStrategy compositeStrategy;
+	@Inject
 	protected ExecutorService executorService;
 	protected DistributedLong globalLookupId;
 	protected Map<Long, AgentInfo> agents;
 	protected Map<Long, ClientInfo> clients;
 	protected Map<Long, LookupResult> lookupResults;
 
-	public LookupService(){
+	public LookupService(CompositeStrategy compositeStrategy){
+		this.compositeStrategy=compositeStrategy;
 		canInvoke=new AtomicBoolean(false);
-		lockFactory=new LockFactory();
-		compositeStrategy=new CompositeStrategy();
 	}
 	
 	public ExecutorService getExecutorService() {
@@ -112,7 +116,7 @@ public class LookupService implements InvokerServiceAdapter.IStartable,InvokerSe
 		lookupResult.setLookupRequest(request);
 		
 		if (canInvoke.get()){
-			Object lock=lockFactory.getLock(request.getServiceName());
+			Object lock=lockFactory.getLock(request.getQueue());
 			try{
 				synchronized(lock){
 					AgentInfo result=compositeStrategy.lookup(request, null);

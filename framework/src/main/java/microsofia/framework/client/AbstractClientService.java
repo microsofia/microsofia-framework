@@ -14,10 +14,10 @@ import microsofia.framework.FrameworkException;
 import microsofia.framework.invoker.Invoker;
 import microsofia.framework.map.Map;
 import microsofia.framework.registry.lookup.ILookupService;
-import microsofia.framework.service.Service;
+import microsofia.framework.service.AbstractService;
 import microsofia.framework.service.ServiceInfo;
 
-public abstract class AbstractClientService<SI extends ServiceInfo> extends Service<AtomixClient,SI>{
+public abstract class AbstractClientService<SI extends ServiceInfo> extends AbstractService<AtomixClient,SI>{
 	private static Log log=LogFactory.getLog(AbstractClientService.class);
 	protected ILookupService lookupService;
 	

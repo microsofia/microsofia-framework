@@ -11,7 +11,7 @@
 	</parent>
 
 	<groupId>com.github.microsofia</groupId>
-	<artifactId>microsofia-framework-atomix</artifactId>
+	<artifactId>microsofia-framework-examples</artifactId>
 	<version>1.0</version>
 
 	<dependencies>
@@ -20,26 +20,16 @@
 			<artifactId>commons-logging</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>io.atomix</groupId>
-			<artifactId>atomix-all</artifactId>
-			<exclusions>
-		       <exclusion>
-		          <groupId>io.netty</groupId>
-		          <artifactId>netty-transport</artifactId>
-		       </exclusion>
-		        <exclusion>
-		          <groupId>io.netty</groupId>
-		          <artifactId>netty-handler</artifactId>
-		       </exclusion>
-		    </exclusions> 
-		</dependency>		
-		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>io.netty</groupId>
-			<artifactId>netty-all</artifactId>
-		</dependency>
+			<groupId>com.github.microsofia</groupId>
+			<artifactId>microsofia-container-api</artifactId>
+		</dependency>		
+	    <dependency>
+	    	<groupId>com.github.microsofia</groupId>
+			<artifactId>microsofia-framework</artifactId>
+	    </dependency>
     </dependencies>
 </project>

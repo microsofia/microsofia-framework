@@ -8,7 +8,7 @@
   
   <dependency>
   	<groupId>com.github.microsofia</groupId>
-	<artifactId>microsofia-framework</artifactId>
+	<artifactId>microsofia-framework-examples</artifactId>
 	<version>1.0</version>
 
   </dependency>
@@ -75,16 +75,16 @@
    		<client>
    			<implementation>testclient</implementation>
 			<registries>
-				<registry host="localhost" port="9992"/>
-				<registry host="localhost" port="9991"/>
-				<registry host="localhost" port="9990"/>
+				<registry host="localhost" port="8992"/>
+				<registry host="localhost" port="8991"/>
+				<registry host="localhost" port="8990"/>
 			</registries>
 		</client>
 		<endpoints>
 			<endpoint.msofiarmi name="fwk">
 				<server>
 					<host>localhost</host>
-					<port>9989</port>
+					<port>8989</port>
 				</server>
 			</endpoint.msofiarmi>
 		</endpoints>
