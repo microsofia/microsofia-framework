@@ -2,11 +2,13 @@ package microsofia.framework.registry.lookup;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -18,6 +20,7 @@ import microsofia.framework.invoker.InvokerServiceAdapter;
 import microsofia.framework.map.Map;
 import microsofia.framework.registry.lookup.strategy.CompositeStrategy;
 
+@Singleton
 public class LookupService implements InvokerServiceAdapter.IStartable,InvokerServiceAdapter.IStoppable,ILookupService{
 	private static Log log=LogFactory.getLog(LookupService.class);
 	protected AtomicBoolean canInvoke;
@@ -32,8 +35,7 @@ public class LookupService implements InvokerServiceAdapter.IStartable,InvokerSe
 	protected Map<Long, ClientInfo> clients;
 	protected Map<Long, LookupResult> lookupResults;
 
-	public LookupService(CompositeStrategy compositeStrategy){
-		this.compositeStrategy=compositeStrategy;
+	public LookupService(){
 		canInvoke=new AtomicBoolean(false);
 	}
 	
@@ -139,9 +141,26 @@ public class LookupService implements InvokerServiceAdapter.IStartable,InvokerSe
 	}
 	
 	@Override
-	public void freeAgent(LookupResult lookupResult) throws Exception{
+	public void freeAgent(Long id) throws Exception{
 		if (canInvoke.get()){
-			lookupResults.remove(lookupResult.getId()).get();
+			lookupResults.remove(id).get();
+		}
+	}
+	
+	@Override
+	public void freeAgent(List<Long> ids) throws Exception{
+		if (canInvoke.get()){
+			List<CompletableFuture<LookupResult>> fs=new ArrayList<>();
+			ids.forEach(it->{
+				fs.add(lookupResults.remove(it));
+			});
+			fs.forEach(it->{
+				try{
+					it.get();
+				}catch(Exception e){
+					log.error(e,e);
+				}
+			});
 		}
 	}
 }

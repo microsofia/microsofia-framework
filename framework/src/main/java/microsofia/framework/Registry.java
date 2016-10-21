@@ -12,6 +12,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
 import microsofia.framework.invoker.InvokerServiceAdapter;
+import microsofia.framework.registry.IRegistryService;
 import microsofia.framework.registry.RegistryConfiguration;
 import microsofia.framework.registry.RegistryService;
 import microsofia.framework.registry.lookup.LockFactory;
@@ -59,36 +60,13 @@ public class Registry implements Service{
 			
 			@Override
 			protected void configure() {
+				bind(IRegistryService.class).to(RegistryService.class).asEagerSingleton();
 			}
 			
 			@Singleton
 			@Provides
 			public ExecutorService getExecutorService(){
 				return Executors.newCachedThreadPool();
-			}
-			
-			@Singleton
-			@Provides
-			public LookupService getLookupService(CompositeStrategy compositeStrategy){
-				return new LookupService(compositeStrategy);
-			}
-			
-			@Singleton
-			@Provides
-			public CompositeStrategy getCompositeStrategy(){
-				return new CompositeStrategy();
-			}
-			
-			@Singleton
-			@Provides
-			public LockFactory getLockFactory(){
-				return new LockFactory();
-			}
-			
-			@Singleton
-			@Provides
-			public InvokerServiceAdapter getInvokerServiceAdapter(LookupService lookupService){
-				return new InvokerServiceAdapter(lookupService);
 			}
 		});
 	}

@@ -11,9 +11,16 @@ public class InvokerServiceAdapter implements IInvokerService {
 	protected ClassMetadata classMetadata;
 	
 	public InvokerServiceAdapter(Object service){
+		setService(service);
+	}		
+	
+	public InvokerServiceAdapter(){
+	}
+	
+	public void setService(Object service){
 		this.service=service;
 		classMetadata=new ClassMetadata(service.getClass());
-	}		
+	}	
 
 	@Override
 	public void start(){

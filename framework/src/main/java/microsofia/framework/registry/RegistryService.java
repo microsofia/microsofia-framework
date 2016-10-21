@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -27,6 +28,7 @@ import microsofia.framework.registry.lookup.LookupResult;
 import microsofia.framework.registry.lookup.LookupService;
 import microsofia.framework.service.AbstractService;
 
+@Singleton
 @Server("fwk")
 public class RegistryService extends AbstractService<AtomixReplica,RegistryInfo> implements IRegistryService{
 	private static final Log log=LogFactory.getLog(RegistryService.class);
@@ -36,8 +38,10 @@ public class RegistryService extends AbstractService<AtomixReplica,RegistryInfo>
 	protected DistributedGroup group;
 	protected Map<Long, AgentInfo> agents;
 	protected Map<Long,LookupResult> lookupResults;
+	@Singleton
 	@Inject
 	protected LookupService lookupService;
+	@Singleton
 	@Inject
 	protected InvokerServiceAdapter invokerServiceAdapter;
 
@@ -102,12 +106,11 @@ public class RegistryService extends AbstractService<AtomixReplica,RegistryInfo>
 
 			registries.put(serviceInfo.getPid(),serviceInfo).get();
 			
-			lookupService.setExecutorService(executorService);
 			lookupService.setAgents(agents);
 			lookupService.setClients(clients);
 			lookupService.setLookupResultId(globalLookupId);
 			lookupService.setLookupResults(lookupResults);
-			
+			invokerServiceAdapter.setService(lookupService);
 			
 			group.join(id).get();
 			group.election().onElection(term -> {

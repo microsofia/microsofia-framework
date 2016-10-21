@@ -28,9 +28,12 @@ import microsofia.framework.agent.IAgentService;
 import microsofia.framework.client.ClientConfiguration;
 import microsofia.framework.client.ClientService;
 import microsofia.framework.client.IClientService;
+import microsofia.framework.client.lookup.ClientLookupService;
+import microsofia.framework.client.lookup.IClientLookupService;
 import microsofia.framework.registry.IRegistryService;
 import microsofia.framework.registry.RegistryConfiguration;
 import microsofia.framework.registry.RegistryService;
+import microsofia.framework.registry.lookup.ILookupService;
 
 public class Framework {
 	private static Log log=LogFactory.getLog(Framework.class);
@@ -87,6 +90,12 @@ public class Framework {
 			@Provides
 			public ExecutorService getExecutorService(){
 				return Executors.newCachedThreadPool();
+			}
+			
+			@Singleton
+			@Provides
+			public ILookupService getLookupService(ClientService cs){
+				return cs.getLookupService();
 			}
 			
 			@Override
@@ -154,7 +163,6 @@ public class Framework {
 
 			@Override
 			protected void configure() {
-				bind(IRegistryService.class).to(RegistryService.class).asEagerSingleton();
 				bind(RegistryConfiguration.class).toInstance(registryConfiguration);
 			}
 		});
@@ -197,6 +205,12 @@ public class Framework {
 
 		container.start();
 		container.injectMembers(service);
+
+		if (applicationConfig.getType().equals(FWK_AGENT)){
+			Object serviceInstance=container.getInstance(((Agent)service).getServiceClass());//TODO bof...
+			AgentService agentService=container.getInstance(AgentService.class);
+			agentService.setAgent(serviceInstance);
+		}
 		service.start();
 	}
 	

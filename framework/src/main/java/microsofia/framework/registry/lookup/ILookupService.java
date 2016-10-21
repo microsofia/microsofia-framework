@@ -11,5 +11,7 @@ public interface ILookupService {
 	
 	public LookupResult searchAgent(LookupRequest request) throws Exception;
 
-	public void freeAgent(LookupResult result) throws Exception;
+	public void freeAgent(Long id) throws Exception;
+
+	public void freeAgent(List<Long> ids) throws Exception;
 }

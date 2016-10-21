@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,12 +14,14 @@ import microsofia.container.module.endpoint.Server;
 import microsofia.framework.client.AbstractClientService;
 import microsofia.framework.map.Map;
 
+@Singleton
 @Server("fwk")
 public class AgentService extends AbstractClientService<AgentInfo> implements IAgentService{
 	private static Log log=LogFactory.getLog(AgentService.class);
 	@Inject
 	protected AgentConfiguration agentConfiguration;
 	protected Map<Long,AgentInfo> agents;
+	protected Object agent;
 	
 	public AgentService(){
 	}
@@ -40,6 +43,18 @@ public class AgentService extends AbstractClientService<AgentInfo> implements IA
 	@Override
 	protected AgentInfo createServiceInfo() {
 		return new AgentInfo();
+	}
+	
+	public void setAgent(Object agent){
+		this.agent=agent;
+	}
+	
+	public Object getAgent(){
+		return agent;
+	}
+	
+	public <A> A getAgent(Class<A> ca){
+		return ca.cast(agent);
 	}
 	
 	@SuppressWarnings("unchecked")

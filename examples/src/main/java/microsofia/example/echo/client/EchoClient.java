@@ -1,23 +1,28 @@
-package microsofia.framework;
+package microsofia.example.echo.client;
 
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import com.google.inject.AbstractModule;
 
-import microsofia.framework.agent.AgentService;
+import microsofia.framework.Client;
+import microsofia.framework.client.ClientService;
 
-public class TestAgent implements Agent {
+@Singleton
+public class EchoClient implements Client {
 	@Inject
-	private AgentService agentService;
+	private ClientService clientService;
+	@Inject
+	private EchoTest echoTest;
 	
-	public TestAgent(){
+	public EchoClient(){
 	}
-
+	
 	@Override
 	public String getImplementation() {
-		return "testagent";
+		return "echo";
 	}
 
 	@Override
@@ -32,11 +37,12 @@ public class TestAgent implements Agent {
 
 	@Override
 	public void start() throws Exception {
-		agentService.start();
+		clientService.start();
+		echoTest.test();
 	}
 
 	@Override
 	public void stop() throws Exception {
-		agentService.stop();
+		clientService.stop();
 	}
 }

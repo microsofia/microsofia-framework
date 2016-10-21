@@ -3,6 +3,9 @@ package microsofia.framework.registry.lookup;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class LockFactory {
 	private Map<String, Lock> locks;
 	

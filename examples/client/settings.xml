@@ -73,7 +73,7 @@
 
    <application name="client1" type="fwk.client">
    		<client>
-   			<implementation>testclient</implementation>
+   			<implementation>echo</implementation>
 			<registries>
 				<registry host="localhost" port="8992"/>
 				<registry host="localhost" port="8991"/>

@@ -4,11 +4,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Singleton;
+
 import microsofia.framework.agent.AgentInfo;
 import microsofia.framework.agent.AgentLookupConfiguration;
 import microsofia.framework.registry.lookup.LookupRequest;
 import microsofia.framework.registry.lookup.LookupResult;
 
+@Singleton
 public class CompositeStrategy extends AbstractStrategy{
 	private Map<AgentLookupConfiguration.Multiplicity, AbstractStrategy> strategies;
 

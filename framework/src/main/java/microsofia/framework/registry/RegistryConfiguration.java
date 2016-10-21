@@ -3,6 +3,7 @@ package microsofia.framework.registry;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Singleton;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -16,6 +17,7 @@ import org.w3c.dom.Element;
 
 import microsofia.container.application.PropertyConfig;
 
+@Singleton
 @XmlRootElement(name="registry")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class RegistryConfiguration {

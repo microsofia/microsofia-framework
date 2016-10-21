@@ -8,6 +8,7 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -54,6 +55,7 @@ public abstract class AbstractService<A extends Atomix,SI extends ServiceInfo> i
 	protected Map<Long, RegistryInfo> registries;
 	protected Map<Long, ClientInfo> clients;
 	@Inject
+	@Singleton
 	protected ExecutorService executorService;
 	protected Invoker invoker;
 	

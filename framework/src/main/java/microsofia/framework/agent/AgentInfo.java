@@ -4,9 +4,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-import microsofia.framework.service.ServiceInfo;
+import microsofia.framework.client.ClientInfo;
 
-public class AgentInfo extends ServiceInfo{
+public class AgentInfo extends ClientInfo{
 	private String queue;
 	private AgentLookupConfiguration lookupConfiguration;
 

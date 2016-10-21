@@ -5,11 +5,13 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import javax.inject.Singleton;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
+@Singleton
 @XmlRootElement(name="lookup")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AgentLookupConfiguration implements Externalizable{

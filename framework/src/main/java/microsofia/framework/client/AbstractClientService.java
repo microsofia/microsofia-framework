@@ -11,19 +11,25 @@ import io.atomix.AtomixClient;
 import io.atomix.catalyst.transport.Address;
 import microsofia.container.application.PropertyConfig;
 import microsofia.framework.FrameworkException;
+import microsofia.framework.client.lookup.ClientLookupService;
+import microsofia.framework.client.lookup.IClientLookupService;
 import microsofia.framework.invoker.Invoker;
 import microsofia.framework.map.Map;
 import microsofia.framework.registry.lookup.ILookupService;
 import microsofia.framework.service.AbstractService;
-import microsofia.framework.service.ServiceInfo;
 
-public abstract class AbstractClientService<SI extends ServiceInfo> extends AbstractService<AtomixClient,SI>{
+public abstract class AbstractClientService<SI extends ClientInfo> extends AbstractService<AtomixClient,SI>{
 	private static Log log=LogFactory.getLog(AbstractClientService.class);
 	protected ILookupService lookupService;
+	protected ClientLookupService clientLookupService;
 	
 	protected AbstractClientService(){
 	}
 	
+	public IClientLookupService getClientLookupService() {
+		return clientLookupService;
+	}
+
 	public abstract ClientConfiguration getClientConfiguration();
 	
 	public ILookupService getLookupService(){
@@ -52,6 +58,9 @@ public abstract class AbstractClientService<SI extends ServiceInfo> extends Abst
 			configureResources();
 			
 			lookupService=invoker.getProxy(ILookupService.class);
+			clientLookupService=new ClientLookupService();//TODO: review all of that, when moving atomix to native module
+			clientLookupService.setAbstractClientService(this);
+			clientLookupService.setLookupService(lookupService);
 	
 			internalStart();
 		}catch(Throwable th){
@@ -76,6 +85,7 @@ public abstract class AbstractClientService<SI extends ServiceInfo> extends Abst
 		}catch(Throwable th){
 			log.debug(th,th);
 		}
+		clientLookupService.close();
 		super.stop();
 	}
 }

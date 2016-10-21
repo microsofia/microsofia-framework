@@ -1,12 +1,14 @@
 package microsofia.framework.client;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import microsofia.container.module.endpoint.Server;
 
+@Singleton
 @Server("fwk")
 public class ClientService extends AbstractClientService<ClientInfo> implements IClientService{
 	private Log log=LogFactory.getLog(ClientService.class);
