@@ -11,19 +11,12 @@ import javax.inject.Singleton;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
-import microsofia.framework.invoker.InvokerServiceAdapter;
-import microsofia.framework.registry.IRegistryService;
-import microsofia.framework.registry.RegistryConfiguration;
 import microsofia.framework.registry.RegistryService;
-import microsofia.framework.registry.lookup.LockFactory;
-import microsofia.framework.registry.lookup.LookupService;
-import microsofia.framework.registry.lookup.strategy.CompositeStrategy;
 
+@Singleton
 public class Registry implements Service{
 	@Inject
 	private RegistryService registryService;
-	@Inject
-	private RegistryConfiguration registryConfiguration;
 
 	public Registry(){
 	}
@@ -36,22 +29,9 @@ public class Registry implements Service{
 		this.registryService = registryService;
 	}
 
-	public RegistryConfiguration getRegistryConfiguration() {
-		return registryConfiguration;
-	}
-
-	public void setRegistryConfiguration(RegistryConfiguration registryConfiguration) {
-		this.registryConfiguration = registryConfiguration;
-	}
-
 	@Override
 	public Type getType() {
 		return Type.REGISTRY;
-	}
-
-	@Override
-	public String getImplementation() {
-		return "";
 	}
 
 	@Override
@@ -60,7 +40,6 @@ public class Registry implements Service{
 			
 			@Override
 			protected void configure() {
-				bind(IRegistryService.class).to(RegistryService.class).asEagerSingleton();
 			}
 			
 			@Singleton

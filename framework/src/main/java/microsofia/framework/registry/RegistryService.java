@@ -1,8 +1,6 @@
 package microsofia.framework.registry;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -11,11 +9,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import io.atomix.AtomixReplica;
-import io.atomix.catalyst.transport.Address;
-import io.atomix.copycat.server.storage.Storage;
 import io.atomix.group.DistributedGroup;
 import io.atomix.variables.DistributedLong;
-import microsofia.container.application.PropertyConfig;
+import microsofia.container.module.atomix.AtomixConfig;
+import microsofia.container.module.atomix.Cluster;
+import microsofia.container.module.atomix.ClusterConfiguration;
 import microsofia.container.module.endpoint.Server;
 import microsofia.framework.FrameworkException;
 import microsofia.framework.agent.AgentInfo;
@@ -27,25 +25,34 @@ import microsofia.framework.registry.lookup.ILookupService;
 import microsofia.framework.registry.lookup.LookupResult;
 import microsofia.framework.registry.lookup.LookupService;
 import microsofia.framework.service.AbstractService;
+import microsofia.framework.service.AtomixConfigurator;
 
 @Singleton
 @Server("fwk")
 public class RegistryService extends AbstractService<AtomixReplica,RegistryInfo> implements IRegistryService{
 	private static final Log log=LogFactory.getLog(RegistryService.class);
 	@Inject
-	protected RegistryConfiguration registryConfiguration;
-	protected DistributedLong globalLookupId;
+	@ClusterConfiguration(configurator={AtomixConfigurator.class},resources={Map.NonAnnotatedMap.class,Invoker.class})
+	@Cluster("registry")
+	protected AtomixReplica atomix;
+	@Inject
+	@Cluster("registry")
+	protected AtomixConfig atomixConfig;
+ 	protected DistributedLong globalLookupId;
 	protected DistributedGroup group;
 	protected Map<Long, AgentInfo> agents;
 	protected Map<Long,LookupResult> lookupResults;
-	@Singleton
 	@Inject
 	protected LookupService lookupService;
-	@Singleton
 	@Inject
 	protected InvokerServiceAdapter invokerServiceAdapter;
 
 	public RegistryService(){
+	}
+	
+	@Override
+	public AtomixReplica getAtomix(){
+		return atomix;
 	}
 	
 	@Override
@@ -58,14 +65,6 @@ public class RegistryService extends AbstractService<AtomixReplica,RegistryInfo>
 		return getProxies(IAgentService.class, agents.values().get());
 	}
 	
-	public RegistryConfiguration getRegistryConfiguration() {
-		return registryConfiguration;
-	}
-
-	public void setRegistryConfiguration(RegistryConfiguration registryConfiguration) {
-		this.registryConfiguration = registryConfiguration;
-	}
-	
 	@Override
 	public RegistryInfo getInfo(){
 		return serviceInfo;
@@ -76,27 +75,15 @@ public class RegistryService extends AbstractService<AtomixReplica,RegistryInfo>
 		return new RegistryInfo();
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({"unchecked" })
 	@Override
 	public void start(){
 		try{
 			export();
 			
-			List<Address> adr=new ArrayList<>();
-			for (RegistryConfiguration.Member a : registryConfiguration.getMember()){
-				adr.add(new Address(a.getHost(), a.getPort()));
-			}
-
-			String localHost=(registryConfiguration.getHost()!=null ? registryConfiguration.getHost() : "localhost");
-			String id=localHost+"/"+registryConfiguration.getPort();
+			String localHost=(atomixConfig.getLocalMember().getHost()!=null ? atomixConfig.getLocalMember().getHost() : "localhost");
+			String id=localHost+"/"+atomixConfig.getLocalMember().getPort();
 			
-			Properties properties=PropertyConfig.toPoperties(registryConfiguration.getProperties());
-			AtomixReplica.Builder builder=AtomixReplica.builder(new Address(localHost,registryConfiguration.getPort()),properties)
-													   .withStorage(new Storage("logs/"+id))
-													   .withResourceTypes((Class)Map.class,Invoker.class);
-			atomix=builder.build();
-			configureSerializer();
-			atomix.bootstrap(adr).join();
 			configureResources();
 			
 			globalLookupId=atomix.getLong(KEY_LOOKUP_ID).get();
@@ -130,11 +117,6 @@ public class RegistryService extends AbstractService<AtomixReplica,RegistryInfo>
 	public void stop(){
 		try{
 			registries.remove(serviceInfo.getPid()).get();
-		}catch(Throwable th){
-			log.debug(th.getMessage(), th);
-		}
-		try{
-			atomix.shutdown().get();
 		}catch(Throwable th){
 			log.debug(th.getMessage(), th);
 		}

@@ -15,6 +15,13 @@ import io.atomix.resource.ResourceTypeInfo;
 @ResourceTypeInfo(id=28, factory=MapFactory.class)
 public class Map<K,V> extends AbstractResource<Map<K,V>> {
 	private MapListener<K,V> mapListener;
+	
+	@ResourceTypeInfo(id=28, factory=MapFactory.class)
+	public static class NonAnnotatedMap extends Map<Object,Object>{
+		public NonAnnotatedMap(CopycatClient client, Properties options) {
+			super(client, options);
+		}
+	}
 
 	public Map(CopycatClient client, Properties options) {
 		super(client, options);

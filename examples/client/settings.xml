@@ -72,13 +72,17 @@
    
 
    <application name="client1" type="fwk.client">
+   		<clusters>
+   			<cluster name="registry">
+				<members>
+					<member host="localhost" port="8992"/>
+					<member host="localhost" port="8991"/>
+					<member host="localhost" port="8990"/>
+				</members>
+			</cluster>
+		</clusters>
    		<client>
    			<implementation>echo</implementation>
-			<registries>
-				<registry host="localhost" port="8992"/>
-				<registry host="localhost" port="8991"/>
-				<registry host="localhost" port="8990"/>
-			</registries>
 		</client>
 		<endpoints>
 			<endpoint.msofiarmi name="fwk">

@@ -28,11 +28,6 @@ import microsofia.framework.agent.IAgentService;
 import microsofia.framework.client.ClientConfiguration;
 import microsofia.framework.client.ClientService;
 import microsofia.framework.client.IClientService;
-import microsofia.framework.client.lookup.ClientLookupService;
-import microsofia.framework.client.lookup.IClientLookupService;
-import microsofia.framework.registry.IRegistryService;
-import microsofia.framework.registry.RegistryConfiguration;
-import microsofia.framework.registry.RegistryService;
 import microsofia.framework.registry.lookup.ILookupService;
 
 public class Framework {
@@ -59,7 +54,7 @@ public class Framework {
 		return this;
 	}
 	
-	private void createClient(){
+	private void createClient() throws Exception{
 		ClientConfiguration clientConfiguration;
 		try{
 			clientConfiguration=ClientConfiguration.createClientConfiguration(applicationConfig.getElement());
@@ -107,7 +102,7 @@ public class Framework {
 		application.parseClass(ClientService.class);
 	}
 	
-	private void createAgent(){
+	private void createAgent() throws Exception{
 		AgentConfiguration agentConfiguration;
 		try{
 			agentConfiguration=AgentConfiguration.createAgentConfiguration(applicationConfig.getElement());
@@ -150,23 +145,6 @@ public class Framework {
 	}
 	
 	private void createRegistry(){
-		RegistryConfiguration registryConfiguration;
-		try{
-			registryConfiguration=RegistryConfiguration.readFrom(applicationConfig.getElement());
-		}catch (Exception e) {
-			throw new FrameworkException("Cannot read registry configuration in settings file.",e);
-		}
-		if (registryConfiguration==null){
-			throw new FrameworkException("Missing registry configuration in settings file.");
-		}
-		application.addModule(new AbstractModule() {
-
-			@Override
-			protected void configure() {
-				bind(RegistryConfiguration.class).toInstance(registryConfiguration);
-			}
-		});
-		
 		service=new Registry();
 	}
 
@@ -194,7 +172,9 @@ public class Framework {
 		DefaultApplicationProvider provider=new DefaultApplicationProvider();
 
 		if (service.getInjectedClasses()!=null){
-			service.getInjectedClasses().forEach(application::parseClass);
+			for (Class<?> c: service.getInjectedClasses()){
+				application.parseClass(c);
+			}
 		}
 		if (service.getGuiceModules()!=null){
 			service.getGuiceModules().forEach(application::addModule);
@@ -207,10 +187,16 @@ public class Framework {
 		container.injectMembers(service);
 
 		if (applicationConfig.getType().equals(FWK_AGENT)){
-			Object serviceInstance=container.getInstance(((Agent)service).getServiceClass());//TODO bof...
+			Object serviceInstance=container.getInstance(((Agent)service).getServiceClass());
 			AgentService agentService=container.getInstance(AgentService.class);
 			agentService.setAgent(serviceInstance);
+
+		}else if (applicationConfig.getType().equals(FWK_CLIENT)){
+			Object clientInstance=container.getInstance(((Client)service).getServiceClass());
+			ClientService clientService=container.getInstance(ClientService.class);
+			clientService.setClient(clientInstance);
 		}
+
 		service.start();
 	}
 	

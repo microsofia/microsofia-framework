@@ -9,8 +9,6 @@ public interface Service {
 
 	public Type getType();
 	
-	public String getImplementation();
-	
 	public List<AbstractModule> getGuiceModules();
 	
 	public List<Class<?>> getInjectedClasses();

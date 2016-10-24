@@ -14,10 +14,20 @@ public class ClientService extends AbstractClientService<ClientInfo> implements 
 	private Log log=LogFactory.getLog(ClientService.class);
 	@Inject
 	protected ClientConfiguration clientConfiguration;	
+	private Object client;
 	
 	public ClientService(){
 	}
 
+	@Override
+	public Object getClient(){
+		return client;
+	}
+	
+	public void setClient(Object client){
+		this.client=client;
+	}
+	
 	@Override
 	public ClientConfiguration getClientConfiguration(){
 		return clientConfiguration;

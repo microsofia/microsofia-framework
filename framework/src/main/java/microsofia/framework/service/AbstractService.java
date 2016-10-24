@@ -20,9 +20,6 @@ import microsofia.container.module.endpoint.IServer;
 import microsofia.container.module.endpoint.Server;
 import microsofia.container.module.endpoint.Unexport;
 import microsofia.container.module.endpoint.msofiarmi.MSofiaRMIServer;
-import microsofia.framework.agent.AgentFilters;
-import microsofia.framework.agent.AgentInfo;
-import microsofia.framework.agent.AgentLookupConfiguration;
 import microsofia.framework.agent.IAgentService;
 import microsofia.framework.client.ClientInfo;
 import microsofia.framework.client.IClientService;
@@ -30,10 +27,6 @@ import microsofia.framework.invoker.Invoker;
 import microsofia.framework.map.Map;
 import microsofia.framework.registry.IRegistryService;
 import microsofia.framework.registry.RegistryInfo;
-import microsofia.framework.registry.lookup.LookupRequest;
-import microsofia.framework.registry.lookup.LookupResult;
-import microsofia.framework.registry.lookup.LookupResultFilters;
-import microsofia.rmi.ObjectAddress;
 
 @Server("fwk")
 public abstract class AbstractService<A extends Atomix,SI extends ServiceInfo> implements IService{
@@ -50,12 +43,10 @@ public abstract class AbstractService<A extends Atomix,SI extends ServiceInfo> i
 	@Server("fwk")
 	protected IServer server;
 	protected SI serviceInfo;
-	protected A atomix;
 	protected DistributedLong serviceId;
 	protected Map<Long, RegistryInfo> registries;
 	protected Map<Long, ClientInfo> clients;
 	@Inject
-	@Singleton
 	protected ExecutorService executorService;
 	protected Invoker invoker;
 	
@@ -69,29 +60,16 @@ public abstract class AbstractService<A extends Atomix,SI extends ServiceInfo> i
 	}
 	
 	protected abstract SI createServiceInfo();
-	
-	protected void configureSerializer() throws Exception{
-		atomix.serializer().register(ObjectAddress.class,1989);
-		atomix.serializer().register(ServiceInfo.class,1988);
-		atomix.serializer().register(RegistryInfo.class,1987);
-		atomix.serializer().register(AgentInfo.class,1986);
-		atomix.serializer().register(ClientInfo.class,1985);
-		atomix.serializer().register(LookupRequest.class,1984);
-		atomix.serializer().register(LookupResult.class,1983);
-		atomix.serializer().register(AgentFilters.QueueFilter.class,1982);
-		atomix.serializer().register(LookupResultFilters.LookupResultByAgentPidFilter.class,1981);
-		atomix.serializer().register(LookupResultFilters.LookupResultByClientPidFilter.class,1980);
-		atomix.serializer().register(LookupResultFilters.LookupResultByQueueFilter.class,1979);
-		atomix.serializer().register(AgentLookupConfiguration.class,1978);
-	}
+
+	protected abstract A getAtomix();
 	
 	@SuppressWarnings("unchecked")
 	protected void configureResources() throws Exception{
-		serviceId=atomix.getLong(KEY_SERVICE_ID).get();
-		registries=atomix.getResource(KEY_REGISTRIES, Map.class).get();
-		clients=atomix.getResource(KEY_CLIENTS,Map.class).get();
+		serviceId=getAtomix().getLong(KEY_SERVICE_ID).get();
+		registries=getAtomix().getResource(KEY_REGISTRIES, Map.class).get();
+		clients=getAtomix().getResource(KEY_CLIENTS,Map.class).get();
 		
-		invoker=atomix.getResource(KEY_INVOKER,Invoker.class).get();
+		invoker=getAtomix().getResource(KEY_INVOKER,Invoker.class).get();
 		invoker.setExecutorService(executorService);
 
 		serviceInfo=createServiceInfo();

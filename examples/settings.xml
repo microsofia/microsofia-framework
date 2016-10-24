@@ -71,12 +71,15 @@
 	</repositories>
    
    <application name="registry1" type="fwk.registry">
-		<registry port="8990" host="localhost">
-			<members>
-				<member host="localhost" port="8991"/>
-				<member host="localhost" port="8992"/>
-			</members>
-		</registry>
+   		<clusters>
+   			<cluster name="registry">
+   				<localmember host="localhost" port="8990"/>
+   				<members>
+					<member host="localhost" port="8991"/>
+					<member host="localhost" port="8992"/>
+   				</members>
+   			</cluster>
+   		</clusters>   		
 		<endpoints>
 			<endpoint.msofiarmi name="fwk">
 				<client>
@@ -89,12 +92,15 @@
 		</endpoints>
    </application>
    <application name="registry2" type="fwk.registry">
-		<registry port="8991" host="localhost">
-			<members>
-				<member host="localhost" port="8990"/>
-				<member host="localhost" port="8992"/>
-			</members>
-		</registry>
+   		<clusters>
+   			<cluster name="registry">
+   				<localmember host="localhost" port="8991"/>
+				<members>
+					<member host="localhost" port="8990"/>
+					<member host="localhost" port="8992"/>
+				</members>
+			</cluster>
+		</clusters>
 		<endpoints>
 			<endpoint.msofiarmi name="fwk">
 				<server>
@@ -105,12 +111,15 @@
 		</endpoints>
    </application>
    <application name="registry3" type="fwk.registry">
-		<registry port="8992" host="localhost">
-			<members>
-				<member host="localhost" port="8991"/>
-				<member host="localhost" port="8990"/>
-			</members>
-		</registry>
+      	<clusters>
+   			<cluster name="registry">
+   				<localmember host="localhost" port="8992"/>
+				<members>
+					<member host="localhost" port="8991"/>
+					<member host="localhost" port="8990"/>
+				</members>
+			</cluster>
+		</clusters>
 		<endpoints>
 			<endpoint.msofiarmi name="fwk">
 				<server>
@@ -121,6 +130,15 @@
 		</endpoints>
    </application>
    <application name="agent1" type="fwk.agent">
+      	<clusters>
+   			<cluster name="registry">
+				<members>
+					<member host="localhost" port="8992"/>
+					<member host="localhost" port="8991"/>
+					<member host="localhost" port="8990"/>
+				</members>
+			</cluster>
+		</clusters>
 		<agent>
 			<queue>echo_queue</queue>
 			<implementation>echo</implementation>
@@ -128,11 +146,6 @@
 				<multiplicity>one</multiplicity>
 				<weigth>2</weigth>
 			</lookup>
-			<registries>
-				<registry host="localhost" port="8992"/>
-				<registry host="localhost" port="8991"/>
-				<registry host="localhost" port="8990"/>
-			</registries>
 		</agent>
 		<endpoints>
 			<endpoint.msofiarmi name="fwk">

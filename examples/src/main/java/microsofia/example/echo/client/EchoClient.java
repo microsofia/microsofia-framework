@@ -45,4 +45,9 @@ public class EchoClient implements Client {
 	public void stop() throws Exception {
 		clientService.stop();
 	}
+
+	@Override
+	public Class<?> getServiceClass() {
+		return EchoTest.class;
+	}
 }
