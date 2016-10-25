@@ -80,7 +80,7 @@ public class ClientLookupService implements IClientLookupService{
 			Object proxy=agentService.getAgent();
 			results.put(proxy,result);
 			return proxy;
-		}
+		}		
 		return null;
 	}
 	

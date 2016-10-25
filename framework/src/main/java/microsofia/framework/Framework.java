@@ -35,6 +35,7 @@ import microsofia.framework.client.ClientConfiguration;
 import microsofia.framework.client.ClientInfo;
 import microsofia.framework.client.ClientService;
 import microsofia.framework.client.IClientService;
+import microsofia.framework.client.lookup.IClientLookupService;
 import microsofia.framework.invoker.Invoker;
 import microsofia.framework.map.Map;
 import microsofia.framework.registry.RegistryInfo;
@@ -201,14 +202,20 @@ public class Framework {
 		container.injectMembers(service);
 
 		if (applicationConfig.getType().equals(FWK_AGENT)){
-			Object serviceInstance=container.getInstance(((Agent)service).getServiceClass());
-			AgentService agentService=container.getInstance(AgentService.class);
-			agentService.setAgent(serviceInstance);
+			Class<?> serviceClass=((Agent)service).getServiceClass();
+			if (serviceClass!=null){
+				Object serviceInstance=container.getInstance(serviceClass);
+				AgentService agentService=container.getInstance(AgentService.class);
+				agentService.setAgent(serviceInstance);
+			}
 
 		}else if (applicationConfig.getType().equals(FWK_CLIENT)){
-			Object clientInstance=container.getInstance(((Client)service).getServiceClass());
-			ClientService clientService=container.getInstance(ClientService.class);
-			clientService.setClient(clientInstance);
+			Class<?> serviceClass=((Client)service).getServiceClass();
+			if (serviceClass!=null){
+				Object clientInstance=container.getInstance(serviceClass);
+				ClientService clientService=container.getInstance(ClientService.class);
+				clientService.setClient(clientInstance);
+			}
 		}
 
 		service.start();
@@ -258,6 +265,12 @@ public class Framework {
 		@Named(AbstractService.KEY_LOOKUP_SERVICE)
 		public ILookupService getLookupService(@Named(AbstractService.KEY_INVOKER) Invoker invoker) throws Exception{
 			return invoker.getProxy(ILookupService.class);
+		}
+		
+		@Singleton
+		@Provides
+		public IClientLookupService getClientLookupService(AbstractClientService<?> clientService){
+			return clientService.getClientLookupService();
 		}
 
 		@Singleton

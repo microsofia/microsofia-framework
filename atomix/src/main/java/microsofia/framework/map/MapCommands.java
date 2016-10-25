@@ -438,6 +438,18 @@ public class MapCommands {
 		public Function<Object,Boolean> getFunction(){
 			return function;
 		}
+		
+		@Override
+	    public void writeObject(BufferOutput<?> buffer, Serializer serializer) {
+	    	super.writeObject(buffer, serializer);
+	    	serializer.writeObject(function, buffer);
+	    }
+
+	    @Override
+	    public void readObject(BufferInput<?> buffer, Serializer serializer) {
+	    	super.readObject(buffer, serializer);
+	    	function =serializer.readObject(buffer);
+	    }
 	}
 	
 	public static class Clear extends MapCommand<Void> {

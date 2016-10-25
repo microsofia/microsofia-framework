@@ -2,8 +2,10 @@ package microsofia.framework.registry.lookup;
 
 import java.util.List;
 
+import microsofia.container.module.endpoint.Id;
 import microsofia.container.module.endpoint.Server;
 
+@Id
 @Server
 public interface ILookupService {
 

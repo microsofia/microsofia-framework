@@ -13,6 +13,7 @@
 		<module>atomix</module>
 		<module>framework</module>
 		<module>examples</module>
+		<module>distributed-object</module>
 	</modules>
 
 	<build>
@@ -48,6 +49,11 @@
 			<dependency>
 				<groupId>com.github.microsofia</groupId>
 				<artifactId>microsofia-framework-examples</artifactId>
+				<version>1.0</version>
+			</dependency>
+			<dependency>
+				<groupId>com.github.microsofia</groupId>
+				<artifactId>microsofia-framework-do</artifactId>
 				<version>1.0</version>
 			</dependency>
 			<dependency>

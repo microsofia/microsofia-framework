@@ -45,7 +45,8 @@ public class ClientService extends AbstractClientService<ClientInfo> implements 
 	
 	protected void internalStart() throws Exception{
 		clients.put(serviceInfo.getPid(),serviceInfo).get();
-		log.info("Client connected...");
+		log.info("Client "+serviceInfo+" connected...");
+		System.out.println("Client "+serviceInfo+" connected...");
 	}
 
 	@Override

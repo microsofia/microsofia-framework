@@ -52,6 +52,7 @@ public class AgentService extends AbstractClientService<AgentInfo> implements IA
 		this.agent=agent;
 	}
 	
+	@Override
 	public Object getAgent(){
 		return agent;
 	}
@@ -92,7 +93,8 @@ public class AgentService extends AbstractClientService<AgentInfo> implements IA
 		
 		agents.put(serviceInfo.getPid(),serviceInfo).get();
 		
-		log.info("Agent ready...");
+		log.info("Agent"+serviceInfo+" ready...");
+		System.out.println("Agent"+serviceInfo+" ready...");
 	}
 	
 	@Override

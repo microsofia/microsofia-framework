@@ -2,12 +2,14 @@ package microsofia.framework.registry;
 
 import java.util.List;
 
+import microsofia.container.module.endpoint.Id;
 import microsofia.container.module.endpoint.Server;
 import microsofia.framework.agent.IAgentService;
 import microsofia.framework.client.IClientService;
 import microsofia.framework.registry.lookup.ILookupService;
 import microsofia.framework.service.IService;
 
+@Id
 @Server
 public interface IRegistryService extends IService{
 	

@@ -1,0 +1,219 @@
+<settings>
+  <localRepository>d:\.m2</localRepository>
+  
+  <!-- 
+   | Default: false
+  <offline>false</offline>
+  -->
+  
+  <dependency>
+  	<groupId>com.github.microsofia</groupId>
+	<artifactId>microsofia-framework-do</artifactId>
+	<version>1.0</version>
+
+  </dependency>
+
+  <!-- proxies
+   -->
+  <proxies>
+	<!--proxy>
+		<active>true</active>
+		<protocol>http</protocol>
+		<host>172.21.192.20</host>
+		<port>3333</port>
+		<nonProxyHosts>localhost|127.0.0.1|172.21.16.0/20|*.lb.murex.com|*.fr.murex.com|beryte|callisto|nexus-lb</nonProxyHosts>
+	</proxy-->
+  </proxies>
+
+  <!-- mirrors
+  -->
+  <mirrors>
+	 <mirror>
+      <id>amirror</id>
+      <mirrorOf>centraltt</mirrorOf>
+      <url>http://nexus-lb:8081/nexus/content/groups/public</url>
+    </mirror>
+  </mirrors>
+  
+	<repositories>
+		<repository>
+	    	<id>nexus</id>
+	        <url>http://nexus-lb:8081/nexus/content/groups/public</url>
+	        <releases><enabled>true</enabled></releases>
+	        <snapshots><enabled>true</enabled></snapshots>
+		</repository>
+		<repository>
+			<id>mvncentral</id>
+			<name>mvncentral</name>
+			<url>http://nexus-lb:8081/nexus/content/repositories/eclipse-cpp-luna-4.4-R/</url>
+		</repository>
+		
+	    <repository>
+			<id>ecplise-cdt-8.4.0</id>
+			<name>ecplise-cdt-8.4.0</name>
+			<url>http://nexus-lb:8081/nexus/content/repositories/eclipse-cdt-8.4.0</url>
+		</repository>
+		<repository>
+			<id>eclipse-cpp-luna-4.4-R</id>
+			<name>eclipse-cpp-luna-4.4-R</name>
+			<url>http://nexus-lb:8081/nexus/content/repositories/eclipse-cpp-luna-4.4-R/</url>
+		</repository>
+		<repository>
+			<id>mvnrepo1</id>
+			<name>mvnrepo1</name>
+			<url>https://maven.repository.redhat.com/ga/</url>
+		</repository>
+		<repository>
+          <id>hyperic-external</id>
+          <name>Hyperic External Dependencies Repository</name>
+          <url>http://maven.hyperic.org/external</url>
+       </repository>
+	</repositories>
+   
+   <application name="registry1" type="fwk.registry">
+   		<clusters>
+   			<cluster name="registry">
+   				<localmember host="localhost" port="8990"/>
+   				<members>
+					<member host="localhost" port="8991"/>
+					<member host="localhost" port="8992"/>
+   				</members>
+   			</cluster>
+   		</clusters>   		
+		<endpoints>
+			<endpoint.msofiarmi name="fwk">
+				<client>
+				</client>
+				<server>
+					<host>localhost</host>
+					<port>8999</port>
+				</server>
+			</endpoint.msofiarmi>
+		</endpoints>
+   </application>
+   <application name="registry2" type="fwk.registry">
+   		<clusters>
+   			<cluster name="registry">
+   				<localmember host="localhost" port="8991"/>
+				<members>
+					<member host="localhost" port="8990"/>
+					<member host="localhost" port="8992"/>
+				</members>
+			</cluster>
+		</clusters>
+		<endpoints>
+			<endpoint.msofiarmi name="fwk">
+				<server>
+					<host>localhost</host>
+					<port>8998</port>
+				</server>
+			</endpoint.msofiarmi>
+		</endpoints>
+   </application>
+   <application name="registry3" type="fwk.registry">
+      	<clusters>
+   			<cluster name="registry">
+   				<localmember host="localhost" port="8992"/>
+				<members>
+					<member host="localhost" port="8991"/>
+					<member host="localhost" port="8990"/>
+				</members>
+			</cluster>
+		</clusters>
+		<endpoints>
+			<endpoint.msofiarmi name="fwk">
+				<server>
+					<host>localhost</host>
+					<port>8997</port>
+				</server>
+			</endpoint.msofiarmi>
+		</endpoints>
+   </application>
+   <application name="agent1" type="fwk.agent">
+      	<clusters>
+   			<cluster name="registry">
+				<members>
+					<member host="localhost" port="8992"/>
+					<member host="localhost" port="8991"/>
+					<member host="localhost" port="8990"/>
+				</members>
+			</cluster>
+		</clusters>
+		<agent>
+			<queue>dosample</queue>
+			<implementation>do.master</implementation>
+			<lookup>
+				<multiplicity>one</multiplicity>
+			</lookup>
+		</agent>
+		<databases>
+			<database name="master">
+				<jdbcUrl>jdbc:derby:target/master;create=true</jdbcUrl>
+				<driverClassName>org.apache.derby.jdbc.EmbeddedDriver</driverClassName>
+			</database>
+		</databases>
+		<persistence>
+			<persistence-unit name="master" databasename="master">
+				<properties>
+					<property name="hibernate.hbm2ddl.auto" value="create"/>
+				</properties>				
+			</persistence-unit>
+		</persistence>
+		<endpoints>
+			<endpoint.msofiarmi name="fwk">
+				<server>
+					<host>localhost</host>
+					<port>8995</port>
+				</server>
+			</endpoint.msofiarmi>
+		</endpoints>
+   </application>
+   <application name="slave1" type="fwk.agent">
+      	<clusters>
+   			<cluster name="registry">
+				<members>
+					<member host="localhost" port="8992"/>
+					<member host="localhost" port="8991"/>
+					<member host="localhost" port="8990"/>
+				</members>
+			</cluster>
+		</clusters>
+		<agent>
+			<queue>doslave</queue>
+			<implementation>do.slave.sample</implementation>
+			<lookup>
+				<multiplicity>one</multiplicity>
+			</lookup>
+		</agent>
+		<endpoints>
+			<endpoint.msofiarmi name="fwk">
+				<server>
+					<host>localhost</host>
+					<port>8985</port>
+				</server>
+			</endpoint.msofiarmi>
+		</endpoints>
+   </application>
+   <application name="sampledoclient" type="fwk.client">
+   		<clusters>
+   			<cluster name="registry">
+				<members>
+					<member host="localhost" port="8992"/>
+					<member host="localhost" port="8991"/>
+					<member host="localhost" port="8990"/>
+				</members>
+			</cluster>
+		</clusters>
+   		<client>
+   			<implementation>do.sample.client</implementation>
+		</client>
+		<endpoints>
+			<endpoint.msofiarmi name="fwk">
+				<server>
+					<host>localhost</host>
+					<port>8989</port>
+				</server>
+			</endpoint.msofiarmi>
+		</endpoints>
+   </application>
+</settings>

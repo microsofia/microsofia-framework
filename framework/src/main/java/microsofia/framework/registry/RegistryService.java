@@ -106,7 +106,8 @@ public class RegistryService extends AbstractService<AtomixReplica,RegistryInfo>
 				}
 			});
 			
-			log.info("Registry ready...");
+			log.info("Registry "+serviceInfo+" ready...");
+			System.out.println("Registry "+serviceInfo+" ready...");
 		}catch(Throwable th){
 			th.printStackTrace();
 			throw new FrameworkException(th.getMessage(), th);
