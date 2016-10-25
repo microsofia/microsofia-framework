@@ -1,6 +1,8 @@
 package microsofia.framework.client;
 
 import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import io.atomix.AtomixClient;
@@ -21,7 +23,10 @@ public abstract class AbstractClientService<SI extends ClientInfo> extends Abstr
 	@ClusterConfiguration(configurator={AtomixConfigurator.class},resources={Map.NonAnnotatedMap.class,Invoker.class})
 	@Cluster("registry")
 	protected AtomixClient atomix;
+	@Inject
+	@Named(KEY_LOOKUP_SERVICE)
 	protected ILookupService lookupService;
+	@Inject
 	protected ClientLookupService clientLookupService;
 	
 	protected AbstractClientService(){
@@ -51,11 +56,7 @@ public abstract class AbstractClientService<SI extends ClientInfo> extends Abstr
 		try{
 			export();
 
-			configureResources();			
-			lookupService=invoker.getProxy(ILookupService.class);
-			clientLookupService=new ClientLookupService();
-			clientLookupService.setAbstractClientService(this);
-			clientLookupService.setLookupService(lookupService);
+			configureService();
 	
 			internalStart();
 		}catch(Throwable th){

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.apache.commons.logging.Log;
@@ -20,6 +21,8 @@ public class AgentService extends AbstractClientService<AgentInfo> implements IA
 	private static Log log=LogFactory.getLog(AgentService.class);
 	@Inject
 	protected AgentConfiguration agentConfiguration;
+	@Inject
+	@Named(KEY_AGENTS)
 	protected Map<Long,AgentInfo> agents;
 	protected Object agent;
 	
@@ -57,10 +60,7 @@ public class AgentService extends AbstractClientService<AgentInfo> implements IA
 		return ca.cast(agent);
 	}
 	
-	@SuppressWarnings("unchecked")
 	protected void internalStart() throws Exception{
-		agents=atomix.getResource(KEY_AGENTS, Map.class).get();
-
 		serviceInfo.setQueue(agentConfiguration.getQueue());
 		serviceInfo.setLookupConfiguration(agentConfiguration.getLookupConfiguration());
 		

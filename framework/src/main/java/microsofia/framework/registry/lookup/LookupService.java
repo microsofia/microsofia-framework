@@ -3,11 +3,11 @@ package microsofia.framework.registry.lookup;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.apache.commons.logging.Log;
@@ -19,6 +19,7 @@ import microsofia.framework.client.ClientInfo;
 import microsofia.framework.invoker.InvokerServiceAdapter;
 import microsofia.framework.map.Map;
 import microsofia.framework.registry.lookup.strategy.CompositeStrategy;
+import microsofia.framework.service.AbstractService;
 
 @Singleton
 public class LookupService implements InvokerServiceAdapter.IStartable,InvokerServiceAdapter.IStoppable,ILookupService{
@@ -30,43 +31,29 @@ public class LookupService implements InvokerServiceAdapter.IStartable,InvokerSe
 	protected CompositeStrategy compositeStrategy;
 	@Inject
 	protected ExecutorService executorService;
+	@Inject
+	@Named(AbstractService.KEY_LOOKUP_ID)
 	protected DistributedLong globalLookupId;
+	@Inject
+	@Named(AbstractService.KEY_AGENTS)
 	protected Map<Long, AgentInfo> agents;
+	@Inject
+	@Named(AbstractService.KEY_CLIENTS)
 	protected Map<Long, ClientInfo> clients;
+	@Inject
+	@Named(AbstractService.KEY_LOOKUP_RESULT)
 	protected Map<Long, LookupResult> lookupResults;
 
 	public LookupService(){
 		canInvoke=new AtomicBoolean(false);
 	}
 	
-	public ExecutorService getExecutorService() {
-		return executorService;
-	}
-
-	public void setExecutorService(ExecutorService executorService) {
-		this.executorService = executorService;
-	}
-
-	public void setLookupResultId(DistributedLong globalLookupId){
-		this.globalLookupId=globalLookupId;
-	}
-	
-	public void setAgents(Map<Long, AgentInfo> agents) throws InterruptedException, ExecutionException{
-		this.agents=agents;
-		compositeStrategy.setAgents(agents);
+	public void start() throws Exception{
+		compositeStrategy.start();
 		agents.setMapListener(this::agentRemoved).get();
-	}
-	
-	public void setClients(Map<Long, ClientInfo> clients) throws InterruptedException, ExecutionException{
-		this.clients=clients;
 		clients.setMapListener(this::clientRemoved).get();
 	}
 	
-	public void setLookupResults(Map<Long, LookupResult> lookupResults){
-		this.lookupResults=lookupResults;
-		compositeStrategy.setLookupResults(lookupResults);
-	}
-		
 	@Override
 	public void startInvocation() {
 		canInvoke.set(true);

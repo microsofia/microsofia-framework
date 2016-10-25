@@ -8,7 +8,7 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
+import javax.inject.Named;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,23 +31,32 @@ import microsofia.framework.registry.RegistryInfo;
 @Server("fwk")
 public abstract class AbstractService<A extends Atomix,SI extends ServiceInfo> implements IService{
 	private static Log log=LogFactory.getLog(AbstractService.class);
-	protected static final String KEY_REGISTRIES 		= "registries";
-	protected static final String KEY_AGENTS 	  		= "agents";
-	protected static final String KEY_CLIENTS 	  		= "clients";
-	protected static final String KEY_INVOKER 	  		= "invoker";
-	protected static final String KEY_INVOKER_GROUP		= "group";
-	protected static final String KEY_LOOKUP_RESULT		= "lookupResult";
-	protected static final String KEY_SERVICE_ID		= "serviceId";
-	protected static final String KEY_LOOKUP_ID			= "lookupId";
+	public static final String KEY_REGISTRIES 		= "registries";
+	public static final String KEY_AGENTS 	  		= "agents";
+	public static final String KEY_CLIENTS 	  		= "clients";
+	public static final String KEY_INVOKER 	  		= "invoker";
+	public static final String KEY_INVOKER_GROUP	= "group";
+	public static final String KEY_LOOKUP_RESULT	= "lookupResult";
+	public static final String KEY_SERVICE_ID		= "serviceId";
+	public static final String KEY_LOOKUP_ID		= "lookupId";
+	public static final String KEY_LOOKUP_SERVICE	= "lookupService";
 	@Inject
 	@Server("fwk")
 	protected IServer server;
 	protected SI serviceInfo;
+	@Inject
+	@Named(KEY_SERVICE_ID)
 	protected DistributedLong serviceId;
+	@Inject
+	@Named(KEY_REGISTRIES)
 	protected Map<Long, RegistryInfo> registries;
+	@Inject
+	@Named(KEY_CLIENTS)
 	protected Map<Long, ClientInfo> clients;
 	@Inject
 	protected ExecutorService executorService;
+	@Inject
+	@Named(KEY_INVOKER)
 	protected Invoker invoker;
 	
 	public AbstractService(){
@@ -63,13 +72,7 @@ public abstract class AbstractService<A extends Atomix,SI extends ServiceInfo> i
 
 	protected abstract A getAtomix();
 	
-	@SuppressWarnings("unchecked")
-	protected void configureResources() throws Exception{
-		serviceId=getAtomix().getLong(KEY_SERVICE_ID).get();
-		registries=getAtomix().getResource(KEY_REGISTRIES, Map.class).get();
-		clients=getAtomix().getResource(KEY_CLIENTS,Map.class).get();
-		
-		invoker=getAtomix().getResource(KEY_INVOKER,Invoker.class).get();
+	protected void configureService() throws Exception{
 		invoker.setExecutorService(executorService);
 
 		serviceInfo=createServiceInfo();

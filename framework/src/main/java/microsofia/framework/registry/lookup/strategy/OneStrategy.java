@@ -2,10 +2,13 @@ package microsofia.framework.registry.lookup.strategy;
 
 import java.util.List;
 
+import javax.inject.Singleton;
+
 import microsofia.framework.agent.AgentInfo;
 import microsofia.framework.agent.AgentLookupConfiguration;
 import microsofia.framework.registry.lookup.LookupRequest;
 
+@Singleton
 public class OneStrategy extends AbstractStrategy{
 
 	public OneStrategy(){

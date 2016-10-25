@@ -8,6 +8,7 @@ import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.apache.commons.logging.Log;
@@ -17,18 +18,28 @@ import org.w3c.dom.Element;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
+import io.atomix.AtomixClient;
+import io.atomix.variables.DistributedLong;
 import microsofia.container.ContainerBuilder;
 import microsofia.container.ContainerImpl;
 import microsofia.container.application.ApplicationConfig;
 import microsofia.container.application.DefaultApplication;
 import microsofia.container.application.DefaultApplicationProvider;
+import microsofia.container.module.atomix.Cluster;
 import microsofia.framework.agent.AgentConfiguration;
+import microsofia.framework.agent.AgentInfo;
 import microsofia.framework.agent.AgentService;
 import microsofia.framework.agent.IAgentService;
+import microsofia.framework.client.AbstractClientService;
 import microsofia.framework.client.ClientConfiguration;
+import microsofia.framework.client.ClientInfo;
 import microsofia.framework.client.ClientService;
 import microsofia.framework.client.IClientService;
+import microsofia.framework.invoker.Invoker;
+import microsofia.framework.map.Map;
+import microsofia.framework.registry.RegistryInfo;
 import microsofia.framework.registry.lookup.ILookupService;
+import microsofia.framework.service.AbstractService;
 
 public class Framework {
 	private static Log log=LogFactory.getLog(Framework.class);
@@ -79,25 +90,20 @@ public class Framework {
 			throw new FrameworkException("Couldn't load client configuration with implementation "+clientConfiguration.getImplementation());
 		}
 		
-		application.addModule(new AbstractModule() {
+		application.addModule(new AbstactClientModule(){
+			
+			@Singleton
+			@Provides
+			public AbstractClientService<?> getAbstractClientService(ClientService clientService){
+				return (AbstractClientService<?>)clientService;
+			}
 
-			@Singleton
-			@Provides
-			public ExecutorService getExecutorService(){
-				return Executors.newCachedThreadPool();
-			}
-			
-			@Singleton
-			@Provides
-			public ILookupService getLookupService(ClientService cs){
-				return cs.getLookupService();
-			}
-			
 			@Override
 			protected void configure() {
 				bind(IClientService.class).to(ClientService.class).asEagerSingleton();
 				bind(ClientConfiguration.class).toInstance(clientConfiguration);
 			}
+			
 		});
 		application.parseClass(ClientService.class);
 	}
@@ -127,12 +133,20 @@ public class Framework {
 			throw new FrameworkException("Couldn't load agent configuration with implementation "+agentConfiguration.getImplementation());
 		}
 		
-		application.addModule(new AbstractModule() {
-
+		application.addModule(new AbstactClientModule() {
+			
 			@Singleton
 			@Provides
-			public ExecutorService getExecutorService(){
-				return Executors.newCachedThreadPool();
+			public AbstractClientService<?> getAbstractClientService(AgentService agentService){
+				return (AbstractClientService<?>)agentService;
+			}
+			
+			@SuppressWarnings({"unchecked" })
+			@Singleton
+			@Provides
+			@Named(AbstractService.KEY_AGENTS)
+			public Map<Long, AgentInfo> getAgents(@Cluster("registry") AtomixClient atomix) throws Exception{
+				return atomix.getResource(AbstractService.KEY_AGENTS,Map.class).get();
 			}
 			
 			@Override
@@ -203,6 +217,54 @@ public class Framework {
 	public void stop() throws Throwable{
 		service.stop();
 		container.stop();
+	}
+	
+	private abstract class AbstactClientModule extends AbstractModule {
+		AbstactClientModule(){
+		}
+
+		@Singleton
+		@Provides
+		@Named(AbstractService.KEY_SERVICE_ID)
+		public DistributedLong getServiceId(@Cluster("registry") AtomixClient atomix) throws Exception{
+			return atomix.getLong(AbstractService.KEY_SERVICE_ID).get();
+		}
+
+		@SuppressWarnings({"unchecked" })
+		@Singleton
+		@Provides
+		@Named(AbstractService.KEY_REGISTRIES)
+		public Map<Long, RegistryInfo> getRegistries(@Cluster("registry") AtomixClient atomix) throws Exception{
+			return atomix.getResource(AbstractService.KEY_REGISTRIES,Map.class).get();
+		}
+
+		@SuppressWarnings({"unchecked" })
+		@Singleton
+		@Provides
+		@Named(AbstractService.KEY_CLIENTS)
+		public Map<Long, ClientInfo> getClients(@Cluster("registry") AtomixClient atomix) throws Exception{
+			return atomix.getResource(AbstractService.KEY_CLIENTS,Map.class).get();
+		}
+
+		@Singleton
+		@Provides
+		@Named(AbstractService.KEY_INVOKER)
+		public Invoker getInvoker(@Cluster("registry") AtomixClient atomix) throws Exception{
+			return atomix.getResource(AbstractService.KEY_INVOKER,Invoker.class).get();
+		}
+
+		@Singleton
+		@Provides
+		@Named(AbstractService.KEY_LOOKUP_SERVICE)
+		public ILookupService getLookupService(@Named(AbstractService.KEY_INVOKER) Invoker invoker) throws Exception{
+			return invoker.getProxy(ILookupService.class);
+		}
+
+		@Singleton
+		@Provides
+		public ExecutorService getExecutorService(){
+			return Executors.newCachedThreadPool();
+		}
 	}
 	
 	public static void main(String[] argv, Element[] element) throws Throwable{

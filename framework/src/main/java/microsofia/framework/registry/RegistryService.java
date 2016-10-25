@@ -3,6 +3,7 @@ package microsofia.framework.registry;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.apache.commons.logging.Log;
@@ -38,9 +39,17 @@ public class RegistryService extends AbstractService<AtomixReplica,RegistryInfo>
 	@Inject
 	@Cluster("registry")
 	protected AtomixConfig atomixConfig;
+	@Inject
+	@Named(AbstractService.KEY_LOOKUP_ID)
  	protected DistributedLong globalLookupId;
+	@Inject
+	@Named(AbstractService.KEY_INVOKER_GROUP)
 	protected DistributedGroup group;
+	@Inject
+	@Named(AbstractService.KEY_AGENTS)
 	protected Map<Long, AgentInfo> agents;
+	@Inject
+	@Named(AbstractService.KEY_LOOKUP_RESULT)
 	protected Map<Long,LookupResult> lookupResults;
 	@Inject
 	protected LookupService lookupService;
@@ -74,8 +83,7 @@ public class RegistryService extends AbstractService<AtomixReplica,RegistryInfo>
 	protected RegistryInfo createServiceInfo() {
 		return new RegistryInfo();
 	}
-
-	@SuppressWarnings({"unchecked" })
+	
 	@Override
 	public void start(){
 		try{
@@ -84,19 +92,11 @@ public class RegistryService extends AbstractService<AtomixReplica,RegistryInfo>
 			String localHost=(atomixConfig.getLocalMember().getHost()!=null ? atomixConfig.getLocalMember().getHost() : "localhost");
 			String id=localHost+"/"+atomixConfig.getLocalMember().getPort();
 			
-			configureResources();
+			configureService();
 			
-			globalLookupId=atomix.getLong(KEY_LOOKUP_ID).get();
-			agents=atomix.getResource(KEY_AGENTS,Map.class).get();
-			group=atomix.getGroup(KEY_INVOKER_GROUP).get();
-			lookupResults=atomix.getResource(KEY_LOOKUP_RESULT,Map.class).get();
-
 			registries.put(serviceInfo.getPid(),serviceInfo).get();
+			lookupService.start();
 			
-			lookupService.setAgents(agents);
-			lookupService.setClients(clients);
-			lookupService.setLookupResultId(globalLookupId);
-			lookupService.setLookupResults(lookupResults);
 			invokerServiceAdapter.setService(lookupService);
 			
 			group.join(id).get();

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.apache.commons.logging.Log;
@@ -16,11 +18,15 @@ import microsofia.framework.client.AbstractClientService;
 import microsofia.framework.registry.lookup.ILookupService;
 import microsofia.framework.registry.lookup.LookupRequest;
 import microsofia.framework.registry.lookup.LookupResult;
+import microsofia.framework.service.AbstractService;
 
 @Singleton
 public class ClientLookupService implements IClientLookupService{
 	private static Log log=LogFactory.getLog(ClientLookupService.class);
+	@Inject
+	@Named(AbstractService.KEY_LOOKUP_SERVICE)
 	private ILookupService lookupService;
+	@Inject
 	private AbstractClientService<?> abstractClientService;
 	private Map<Object,LookupResult> results;
 	

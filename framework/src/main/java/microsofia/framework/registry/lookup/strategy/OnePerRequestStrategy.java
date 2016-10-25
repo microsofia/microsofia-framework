@@ -3,10 +3,13 @@ package microsofia.framework.registry.lookup.strategy;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.inject.Singleton;
+
 import microsofia.framework.agent.AgentInfo;
 import microsofia.framework.registry.lookup.LookupRequest;
 import microsofia.framework.registry.lookup.LookupResult;
 
+@Singleton
 public class OnePerRequestStrategy extends AbstractStrategy{
 
 	public OnePerRequestStrategy(){

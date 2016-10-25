@@ -4,36 +4,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import microsofia.framework.agent.AgentInfo;
 import microsofia.framework.agent.AgentLookupConfiguration;
 import microsofia.framework.registry.lookup.LookupRequest;
-import microsofia.framework.registry.lookup.LookupResult;
 
 @Singleton
 public class CompositeStrategy extends AbstractStrategy{
 	private Map<AgentLookupConfiguration.Multiplicity, AbstractStrategy> strategies;
+	@Inject
+	private OneStrategy oneStrategy;
+	@Inject
+	private OnePerRequestStrategy onePerRequestStrategy;
+	@Inject
+	private OneOrNStrategy oneOrNStrategy;
 
 	public CompositeStrategy(){
 		strategies=new HashMap<>();
-		strategies.put(AgentLookupConfiguration.Multiplicity.one, new OneStrategy());
-		strategies.put(AgentLookupConfiguration.Multiplicity.one_per_request, new OnePerRequestStrategy());
-		strategies.put(AgentLookupConfiguration.Multiplicity.one_or_n, new OneOrNStrategy());
 	}
 	
-	@Override
-	public void setAgents(microsofia.framework.map.Map<Long, AgentInfo> agents){
-		super.setAgents(agents);
-		strategies.values().forEach(it->it.setAgents(agents));
+	public void start() throws Exception{
+		strategies.put(AgentLookupConfiguration.Multiplicity.one, oneStrategy);
+		strategies.put(AgentLookupConfiguration.Multiplicity.one_per_request, onePerRequestStrategy);
+		strategies.put(AgentLookupConfiguration.Multiplicity.one_or_n, oneOrNStrategy);
 	}
 	
-	@Override
-	public void setLookupResults(microsofia.framework.map.Map<Long, LookupResult> lookupResults){
-		super.setLookupResults(lookupResults);
-		strategies.values().forEach(it->it.setLookupResults(lookupResults));
-	}
-
 	@Override
 	public AgentInfo lookup(LookupRequest lookupRequest,List<AgentInfo> agentInfos) throws Exception{
 		AgentInfo result=null;

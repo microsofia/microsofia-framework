@@ -2,15 +2,23 @@ package microsofia.framework.registry.lookup.strategy;
 
 import java.util.List;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import microsofia.framework.agent.AgentFilters;
 import microsofia.framework.agent.AgentInfo;
 import microsofia.framework.map.Map;
 import microsofia.framework.registry.lookup.LookupRequest;
 import microsofia.framework.registry.lookup.LookupResult;
 import microsofia.framework.registry.lookup.LookupResultFilters;
+import microsofia.framework.service.AbstractService;
 
 public abstract class AbstractStrategy {
+	@Inject
+	@Named(AbstractService.KEY_AGENTS)
 	protected Map<Long, AgentInfo> agents;
+	@Inject
+	@Named(AbstractService.KEY_LOOKUP_RESULT)
 	protected Map<Long, LookupResult> lookupResults;
 
 	protected AbstractStrategy(){

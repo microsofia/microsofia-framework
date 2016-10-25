@@ -5,10 +5,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import javax.inject.Singleton;
+
 import microsofia.framework.agent.AgentInfo;
 import microsofia.framework.registry.lookup.LookupRequest;
 import microsofia.framework.registry.lookup.LookupResult;
 
+@Singleton
 public class OneOrNStrategy extends AbstractStrategy{
 
 	public OneOrNStrategy(){
