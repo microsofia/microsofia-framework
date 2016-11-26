@@ -105,7 +105,7 @@ public class LookupService implements InvokerServiceAdapter.IStartable,InvokerSe
 		lookupResult.setLookupRequest(request);
 		
 		if (canInvoke.get()){
-			Object lock=lockFactory.getLock(request.getQueue());
+			Object lock=lockFactory.getLock(request.getName()+"/"+request.getGroup());
 			try{
 				synchronized(lock){
 					AgentInfo result=compositeStrategy.lookup(request, null);

@@ -2,11 +2,16 @@ package microsofia.framework.distributed.master.impl;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+
 import microsofia.framework.Agent;
 import microsofia.framework.agent.AgentService;
 import microsofia.framework.distributed.slave.impl.Slave;
@@ -33,7 +38,18 @@ public class MasterAgent implements Agent {
 
 	@Override
 	public List<AbstractModule> getGuiceModules() {
-		return null;
+		return Arrays.asList(new AbstractModule() {
+			
+			@Provides
+			@Named("master")
+			public ExecutorService getExecutorService(){
+				return Executors.newFixedThreadPool(20);//start and stop by batch of 20 max in parallel
+			}
+			
+			@Override
+			protected void configure() {
+			}
+		});
 	}
 
 	@Override

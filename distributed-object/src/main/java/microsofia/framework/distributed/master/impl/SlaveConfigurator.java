@@ -4,196 +4,240 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
+import javax.inject.Named;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.google.inject.Singleton;
 
-import microsofia.container.module.db.jpa.JPA;
 import microsofia.container.module.endpoint.Export;
 import microsofia.container.module.endpoint.Server;
-import microsofia.container.module.endpoint.Unexport;
 import microsofia.framework.client.lookup.IClientLookupService;
 import microsofia.framework.distributed.master.ISlaveConfigurator;
-import microsofia.framework.distributed.master.SlaveConfig;
-import microsofia.framework.distributed.master.SlaveConfig.Status;
+import microsofia.framework.distributed.master.SlaveInfo;
+import microsofia.framework.distributed.master.SlaveInfo.Status;
+import microsofia.framework.distributed.master.dao.DataAccess;
+import microsofia.framework.distributed.master.dao.ThrowableFunction;
 import microsofia.framework.distributed.slave.ISlave;
 
 @Singleton
 @Server("fwk")
+@Export
 public class SlaveConfigurator implements ISlaveConfigurator{
+	private static Log log=LogFactory.getLog(SlaveConfigurator.class);
 	@Inject
 	private Master master;
 	@Inject
 	private IClientLookupService clientLookupService;
 	@Inject
-	@JPA("master")
-	private EntityManagerFactory entityManagerFactory;
+	private DataAccess dataAccess;
+	@Inject
+	@Named("master")
+	private ExecutorService executorService;
 	private Map<Long,ISlave> slaves;
 
 	public SlaveConfigurator(){
 		slaves=new Hashtable<>();
 	}
 	
-	@Export
-	public void start(){
+	public void start() throws Exception{
+		List<SlaveInfo> slaveInfos=getSlaveInfo();
+
+		List<Long> ids=slaveInfos.stream()
+			.filter(it->{
+				return it.getStatus().equals(Status.STARTED);
+			})
+			.map(SlaveInfo::getId)
+			.collect(Collectors.toList());
+		
+		startSlave(ids);
 	}
 	
-	@Unexport
 	public void stop(){
-
+		List<ISlave> allSlaves=new ArrayList<ISlave>(slaves.values());
+		slaves.clear();
+		allSlaves.forEach(it->{
+			try{
+				it.stopWorker();
+			}catch(Exception e){
+				log.error(e,e);
+			}
+			try{
+				clientLookupService.freeAgent(it);
+			}catch(Exception e){
+				log.error(e,e);
+			}
+		});
 	}
 	
 	@Override
-	public long addSlave(SlaveConfig slaveConfig) {
-		EntityManager entityManager=entityManagerFactory.createEntityManager();
-		try{
-			entityManager.getTransaction().begin();
-			try{
-				slaveConfig.setStatus(Status.STOPPED);
-				
-				entityManager.persist(slaveConfig);
-				entityManager.getTransaction().commit();
-			}catch(Throwable th){
-				entityManager.getTransaction().rollback();
-				throw th;
-			}
-		}finally{
-			entityManager.close();
-		}
-		return slaveConfig.getId();
+	public long addSlave(SlaveInfo slaveInfo) throws Exception{
+		return dataAccess.write(it->{
+			slaveInfo.setStatus(Status.STOPPED);
+			it.persist(slaveInfo);			
+			return slaveInfo.getId();
+		});
 	}
 
 	@Override
-	public void updateSlave(SlaveConfig slaveConfig) {
-		EntityManager entityManager=entityManagerFactory.createEntityManager();
-		try{
-			entityManager.getTransaction().begin();
-			try{
-				entityManager.merge(slaveConfig);
-				entityManager.getTransaction().commit();
-			}catch(Throwable th){
-				entityManager.getTransaction().rollback();
-				throw th;
-			}
-		}finally{
-			entityManager.close();
-		}
-	}
-
-	@Override
-	public void removeSlave(long id) {
-		EntityManager entityManager=entityManagerFactory.createEntityManager();
-		try{
-			entityManager.getTransaction().begin();
-			try{
-				entityManager.remove(entityManager.getReference(SlaveConfig.class, new Long(id)));
-				entityManager.getTransaction().commit();
-			}catch(Throwable th){
-				entityManager.getTransaction().rollback();
-				throw th;
-			}
-		}finally{
-			entityManager.close();
-		}
+	public void setSlavePoolSize(long slaveId,int poolSize) throws Exception{
+		dataAccess.write(it->{
+			SlaveInfo slaveInfo=it.getReference(SlaveInfo.class, new Long(slaveId));
+			slaveInfo.setThreadPoolSize(poolSize);
+			it.merge(slaveInfo);
+			return null;
+		});
 	}
 	
 	@Override
-	public SlaveConfig getSlaveConfig(long id){
-		EntityManager entityManager=entityManagerFactory.createEntityManager();
-		try{
-			return entityManager.find(SlaveConfig.class,new Long(id));
-		}finally{
-			entityManager.close();
-		}
+	public void setSlaveNameAndGroup(long slaveId,String name,String group) throws Exception{
+		dataAccess.write(it->{
+			SlaveInfo slaveInfo=it.getReference(SlaveInfo.class, new Long(slaveId));
+			slaveInfo.setName(name);
+			slaveInfo.setGroup(group);
+			it.merge(slaveInfo);
+			return null;
+		});
 	}
 
 	@Override
-	public List<SlaveConfig> getSlaveConfig(){
-		EntityManager entityManager=entityManagerFactory.createEntityManager();
-		try{
-			CriteriaQuery<SlaveConfig> query=entityManager.getCriteriaBuilder().createQuery(SlaveConfig.class);
-			Root<SlaveConfig> root=query.from(SlaveConfig.class);
+	public void removeSlave(long id) throws Exception{
+		dataAccess.write(it->{
+			it.remove(it.getReference(SlaveInfo.class, new Long(id)));
+			return null;
+		});
+	}
+	
+	@Override
+	public SlaveInfo getSlaveInfo(long id) throws Exception{
+		return dataAccess.read(it->{
+			return it.find(SlaveInfo.class,new Long(id));
+		});
+	}
+
+	@Override
+	public List<SlaveInfo> getSlaveInfo() throws Exception{
+		return dataAccess.read(it->{
+			CriteriaQuery<SlaveInfo> query=it.getCriteriaBuilder().createQuery(SlaveInfo.class);
+			Root<SlaveInfo> root=query.from(SlaveInfo.class);
 			query.select(root);
 			
-			return entityManager.createQuery(query).getResultList();
-		}finally{
-			entityManager.close();
-		}
+			return it.createQuery(query).getResultList();
+		});
 	}
 
-	private void setSlaveStatus(Long id,Status status) {
-		EntityManager entityManager=entityManagerFactory.createEntityManager();
-		try{
-			entityManager.getTransaction().begin();
+	private void setSlaveStatus(Long id,Status status) throws Exception{
+		dataAccess.write(it->{
+			SlaveInfo slaveInfo=it.getReference(SlaveInfo.class, new Long(id));
+			slaveInfo.setStatus(status);
+			it.merge(slaveInfo);
+			return null;
+		});
+	}
+	
+	private <E> void forAll(List<E> es, ThrowableFunction<E,Void> function) throws Exception{
+		Exception lastTh=null;
+		List<Future<Exception>> futures=new ArrayList<>();
+		for (E e : es){
+			Future<Exception> future=executorService.submit((Callable<Exception>)()->{
+				try{
+					function.apply(e);
+					return null;
+				}catch(Exception th){
+					log.error(th,th);
+					return th;
+				}
+			});
+
+			futures.add(future);
+		}
+		for (Future<Exception> f : futures){
 			try{
-				SlaveConfig slaveConfig=entityManager.getReference(SlaveConfig.class, new Long(id));
-				slaveConfig.setStatus(status);
-				entityManager.merge(slaveConfig);
-				entityManager.getTransaction().commit();
-			}catch(Throwable th){
-				entityManager.getTransaction().rollback();
-				throw th;
+				Exception th2=f.get();
+				if (th2!=null){
+					lastTh=th2;
+				}
+			}catch(Exception e2){
+				lastTh=e2;
+				log.error(e2,e2);
 			}
-		}finally{
-			entityManager.close();
+		}
+		if (lastTh!=null){
+			throw lastTh;//should throw one containing all of them
 		}
 	}
 	
 	@Override
 	public void startSlave(long id) throws Exception{
-		SlaveConfig slaveConfig=getSlaveConfig(id);
+		SlaveInfo slaveInfo=getSlaveInfo(id);
 		ISlave slave=slaves.get(id);
 		if (slave!=null){
-			throw new IllegalStateException("Slave "+slaveConfig+" is already started with remote proxy "+slave);
+			throw new IllegalStateException("Slave "+slaveInfo+" is already started with remote proxy "+slave);
 		}
 
-		slave=clientLookupService.searchAgent(ISlave.class, slaveConfig.getQueue());
-		slave.startWorker(master, slaveConfig);
+		slave=clientLookupService.searchAgent(ISlave.class, slaveInfo.getName(),slaveInfo.getGroup());
+		slave.startWorker(master, slaveInfo);
 		slaves.put(id, slave);
 		setSlaveStatus(id,Status.STARTED);
 	}
 	
 	@Override
 	public void startSlave(List<Long> id) throws Exception{
-		for (Long i : id){
-			startSlave(i);//TODO use executorservice
-		}
+		forAll(id,(Long it)->{
+			startSlave(it);
+			return null;
+		});
 	}
 
 	@Override
 	public void startAllSlave() throws Exception{
-		for (SlaveConfig sc : getSlaveConfig()){
-			startSlave(sc.getId());//TODO use executorservice
-		}
+		forAll(getSlaveInfo(), (SlaveInfo it)->{
+			startSlave(it.getId());
+			return null;
+		});
 	}
 
 	@Override
 	public void stopSlave(long id) throws Exception{
 		ISlave slave=slaves.remove(id);
 		if (slave!=null){
-			slave.stopWorker();
-			clientLookupService.freeAgent(slave);
+			try{
+				slave.stopWorker();
+			}catch(Exception e){
+				log.error(e,e);
+			}
+			try{
+				clientLookupService.freeAgent(slave);
+			}catch(Exception e){
+				log.error(e,e);
+			}
 			setSlaveStatus(id,Status.STOPPED);
 		}
 	}
 	
 	@Override
 	public void stopSlave(List<Long> id) throws Exception{
-		for (Long i : id){
-			stopSlave(i);//TODO use executorservice
-		}
+		forAll(id, (Long it)->{
+			stopSlave(it);
+			return null;
+		});
 	}
 
 	@Override
 	public void stopAllSlave() throws Exception{
-		for (SlaveConfig sc : getSlaveConfig()){
-			stopSlave(sc.getId());//TODO use executorservice
-		}
+		forAll(getSlaveInfo(), (SlaveInfo it)->{
+			stopSlave(it.getId());
+			return null;
+		});
 	}
 	
 	@Override
@@ -201,6 +245,7 @@ public class SlaveConfigurator implements ISlaveConfigurator{
 		return slaves.get(id);
 	}
 
+	@Override
 	public List<ISlave> getSlave(){
 		return new ArrayList<ISlave>(slaves.values());
 	}

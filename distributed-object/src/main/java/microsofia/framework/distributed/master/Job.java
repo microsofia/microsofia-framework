@@ -23,13 +23,15 @@ import javax.persistence.Table;
 @Table(name="DO_JOB")
 @Entity
 public class Job implements Externalizable{
-	public enum Status {CREATED, RUNNING, FINISHED};
+	public enum Status {CREATED, RUNNING, STOPPED, FINISHED};
 	@Id
 	@Column(name="JOB_ID")
 	@GeneratedValue
 	private long id;
 	@Column(name="JOB_PRIORITY")
 	private int priority;
+	@Column(name="JOB_WEIGTH")
+	private long weigth;
 	@Column(name="JOB_METHOD_ID")
 	private int method;
 	@Column(name="JOB_ARGUMENTS")
@@ -38,11 +40,11 @@ public class Job implements Externalizable{
 	@Column(name="JOB_STATUS")
 	private Status status;
 	@ManyToOne
-	@JoinColumn(name="JOB_RO_ID")
-	private RemoteObjectInfo remoteObjectInfo;
+	@JoinColumn(name="JOB_VO_ID")
+	private VirtualObjectInfo virtualObjectInfo;
 	@Column(name="CREATION_TIME")
 	private long creationTime;
-	@OneToOne(cascade=CascadeType.REMOVE)
+	@OneToOne(cascade=CascadeType.ALL)
 	@JoinColumn(name="JOB_RESULT_ID")
 	private JobResult jobResult;
 
@@ -63,6 +65,14 @@ public class Job implements Externalizable{
 
 	public void setPriority(int priority) {
 		this.priority = priority;
+	}
+	
+	public long getWeigth(){
+		return weigth;
+	}
+	
+	public void setWeigth(long l){
+		weigth=l;
 	}
 
 	public int getMethod() {
@@ -100,25 +110,41 @@ public class Job implements Externalizable{
 	public Status getStatus() {
 		return status;
 	}
+	
+	public boolean isStatusCreated(){
+		return status.equals(Status.CREATED);
+	}
+	
+	public boolean isStatusStopped(){
+		return status.equals(Status.STOPPED);
+	}
 
 	public void setStatus(Status status) {
 		this.status = status;
+	}
+	
+	public void setStatusCreated() {
+		this.status = Status.CREATED;
 	}
 	
 	public void setStatusRunning() {
 		this.status = Status.RUNNING;
 	}
 	
+	public void setStatusStopped() {
+		this.status = Status.STOPPED;
+	}
+	
 	public void setStatusFinished() {
 		this.status = Status.FINISHED;
 	}
 
-	public RemoteObjectInfo getRemoteObjectInfo() {
-		return remoteObjectInfo;
+	public VirtualObjectInfo getVirtualObjectInfo() {
+		return virtualObjectInfo;
 	}
 
-	public void setRemoteObjectInfo(RemoteObjectInfo remoteObjectInfo) {
-		this.remoteObjectInfo = remoteObjectInfo;
+	public void setVirtualObjectInfo(VirtualObjectInfo virtualObjectInfo) {
+		this.virtualObjectInfo = virtualObjectInfo;
 	}
 
 	public long getCreationTime() {
@@ -158,6 +184,7 @@ public class Job implements Externalizable{
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeLong(id);
 		out.writeInt(priority);
+		out.writeLong(weigth);
 		out.writeInt(method);
 		if (arguments!=null){
 			out.writeInt(arguments.length);
@@ -166,7 +193,7 @@ public class Job implements Externalizable{
 			out.writeInt(0);
 		}
 		out.writeObject(status);
-		out.writeObject(remoteObjectInfo);
+		out.writeObject(virtualObjectInfo);
 		out.writeLong(creationTime);
 		out.writeObject(jobResult);
 	}
@@ -175,6 +202,7 @@ public class Job implements Externalizable{
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		id=in.readLong();
 		priority=in.readInt();
+		weigth=in.readLong();
 		method=in.readInt();
 		int nb=in.readInt();
 		if (nb>0){
@@ -182,13 +210,13 @@ public class Job implements Externalizable{
 			in.readFully(arguments);
 		}
 		status=(Status)in.readObject();
-		remoteObjectInfo=(RemoteObjectInfo)in.readObject();
+		virtualObjectInfo=(VirtualObjectInfo)in.readObject();
 		creationTime=in.readLong();
 		jobResult=(JobResult)in.readObject();
 	}
 	
 	@Override
 	public String toString(){
-		return "Job[Id:"+id+"][Priority:"+priority+"][Method:"+method+"][Status:"+status+"][RemoteObjectInfo:["+remoteObjectInfo+"][CreationTime:"+creationTime+"]";
+		return "Job[Id:"+id+"][Priority:"+priority+"][Weigth:"+weigth+"][Method:"+method+"][Status:"+status+"][VirtualObjectInfo:["+virtualObjectInfo+"][CreationTime:"+creationTime+"]";
 	}
 }

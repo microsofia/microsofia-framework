@@ -51,28 +51,30 @@ public class ClientLookupService implements IClientLookupService{
 	}
 
 	@Override
-	public Object searchAgent(String queue) throws Exception{
-		return searchAgent(queue,1);
+	public Object searchAgent(String name,String group) throws Exception{
+		return searchAgent(name,group,1);
 	}
 	
 	@Override
-	public <A> A searchAgent(Class<A> ca,String queue) throws Exception{
-		return searchAgent(ca,queue,1);
+	public <A> A searchAgent(Class<A> ca,String name,String group) throws Exception{
+		return searchAgent(ca,name,group,1);
 	}
 	
 	@Override
-	public <A> A searchAgent(Class<A> ca,String queue,int weigth) throws Exception{
-		Object proxy=searchAgent(queue,weigth);
+	public <A> A searchAgent(Class<A> ca,String name,String group,int weigth) throws Exception{
+		Object proxy=searchAgent(name,group,weigth);
 		if (proxy!=null){
 			return ca.cast(proxy);
 		}
 		return null;
 	}
 	
-	public Object searchAgent(String queue,int weigth) throws Exception{
+	@Override
+	public Object searchAgent(String name,String group,int weigth) throws Exception{
 		LookupRequest request=new LookupRequest();
 		request.setClientInfo(getAbstractClientService().getInfo());
-		request.setQueue(queue);
+		request.setName(name);
+		request.setGroup(group);
 		request.setWeight(weigth);
 		LookupResult result=getAbstractClientService().getLookupService().searchAgent(request);
 		if (result.getAgentInfo()!=null){

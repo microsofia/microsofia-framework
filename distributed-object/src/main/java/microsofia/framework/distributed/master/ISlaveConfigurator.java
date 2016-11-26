@@ -8,15 +8,17 @@ import microsofia.framework.distributed.slave.ISlave;
 @Server
 public interface ISlaveConfigurator {
 
-	public long addSlave(SlaveConfig slaveConfig) throws Exception;
+	public long addSlave(SlaveInfo slaveInfo) throws Exception;
 	
-	public void updateSlave(SlaveConfig slaveConfig) throws Exception;
+	public void setSlavePoolSize(long slaveId,int poolSize) throws Exception;
+	
+	public void setSlaveNameAndGroup(long slaveId,String name,String group) throws Exception;
 	
 	public void removeSlave(long id) throws Exception;
 	
-	public SlaveConfig getSlaveConfig(long id) throws Exception;
+	public SlaveInfo getSlaveInfo(long id) throws Exception;
 
-	public List<SlaveConfig> getSlaveConfig() throws Exception;
+	public List<SlaveInfo> getSlaveInfo() throws Exception;
 	
 	public void startSlave(long id) throws Exception;
 	

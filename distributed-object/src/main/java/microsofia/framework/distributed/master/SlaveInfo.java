@@ -11,9 +11,9 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-@Table(name="DO_SLAVE_CONFIG")
+@Table(name="DO_SLAVE")
 @Entity
-public class SlaveConfig implements Externalizable{
+public class SlaveInfo implements Externalizable{
 	public enum Status {STOPPED,STARTED};
 	@Id
 	@GeneratedValue
@@ -23,10 +23,12 @@ public class SlaveConfig implements Externalizable{
 	private int threadPoolSize;
 	@Column(name="SLAVE_STATUS")
 	private Status status;
-	@Column(name="SLAVE_QUEUE")
-	private String queue;//TODO not enough, should use agentname
+	@Column(name="SLAVE_NAME")
+	private String name;
+	@Column(name="SLAVE_GROUP")
+	private String group;
 	
-	public SlaveConfig(){
+	public SlaveInfo(){
 	}
 
 	public long getId() {
@@ -53,20 +55,29 @@ public class SlaveConfig implements Externalizable{
 		this.status = status;
 	}
 
-	public String getQueue() {
-		return queue;
+	public String getName() {
+		return name;
 	}
 
-	public void setQueue(String queue) {
-		this.queue = queue;
+	public void setName(String n) {
+		this.name = n;
 	}
 
+	public String getGroup() {
+		return group;
+	}
+
+	public void setGroup(String n) {
+		this.group= n;
+	}
+	
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeLong(id);
 		out.writeInt(threadPoolSize);
 		out.writeObject(status);
-		out.writeUTF(queue);
+		out.writeUTF(name);
+		out.writeUTF(group);
 	}
 
 	@Override
@@ -74,11 +85,12 @@ public class SlaveConfig implements Externalizable{
 		id=in.readLong();
 		threadPoolSize=in.readInt();
 		status=(Status)in.readObject();
-		queue=in.readUTF();
+		name=in.readUTF();
+		group=in.readUTF();
 	}
 	
 	@Override
 	public String toString(){
-		return "SlaveConfig[Id:"+id+"][ThreadPoolSize:"+threadPoolSize+"][Status:"+status+"][Queue:"+queue+"]";
+		return "SlaveConfig[Id:"+id+"][ThreadPoolSize:"+threadPoolSize+"][Status:"+status+"][Name:"+name+"][Group:"+group+"]";
 	}
 }

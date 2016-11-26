@@ -1,23 +1,22 @@
 package microsofia.framework.distributed.sample;
 
 import java.util.List;
-
+import java.util.concurrent.Future;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
 import com.google.inject.AbstractModule;
-
 import microsofia.framework.Client;
 import microsofia.framework.client.ClientService;
 import microsofia.framework.distributed.master.IMaster;
-import microsofia.framework.distributed.master.IRemoteObject;
-import microsofia.framework.distributed.master.Job;
-import microsofia.framework.distributed.master.SlaveConfig;
+import microsofia.framework.distributed.master.SlaveInfo;
+import microsofia.framework.distributed.master.proxy.ProxyBuilder;
 
 @Singleton
 public class ClientSample implements Client {
 	@Inject
 	private ClientService clientService;
+	@Inject
+	private ProxyBuilder proxyBuilder;
 	
 	public ClientSample(){
 	}
@@ -39,46 +38,44 @@ public class ClientSample implements Client {
 
 	@Override
 	public void start() throws Exception {
-		try{
-			Thread.sleep(5000);
-			clientService.start();
-			System.out.println("Registries:"+clientService.getRegistries());
-			System.out.println("Agents:"+clientService.getRegistries().get(0).getAgents());
-			clientService.getRegistries().get(0).getAgents().forEach(it->{
-				try{
-					System.out.println(it.getInfo());
-				}catch(Exception e){
-					e.printStackTrace();
-				}
-			});
-			IMaster master=clientService.getClientLookupService().searchAgent(IMaster.class, "dosample");
-			System.out.println("master=="+master);
-	
-			SlaveConfig slaveConfig=new SlaveConfig();
-			slaveConfig.setThreadPoolSize(1);
-			slaveConfig.setQueue("doslave");
-			long id=master.getSlaveConfigurator().addSlave(slaveConfig);
-			System.out.println("Slave added id="+id);
-			
-			System.out.println("Slaves: "+master.getSlaveConfigurator().getSlaveConfig());
-			
-			master.getSlaveConfigurator().startSlave(id);
-			
-			System.out.println("After slave start: "+master.getSlaveConfigurator().getSlaveConfig());
-			
-			IRemoteObject stateLessRemoteObject=master.getObjectAllocator().getStateLessRemoteObject();
-			Job job=new Job();
-			long ljobid=stateLessRemoteObject.addJob(job);
-			
-			System.out.println("Job inserted: "+stateLessRemoteObject.getJob(ljobid));
-			
-			slaveConfig.setId(id);
-			slaveConfig.setThreadPoolSize(5);
-			master.getSlaveConfigurator().updateSlave(slaveConfig);
-			System.out.println("After slave update: "+master.getSlaveConfigurator().getSlaveConfig());
-			master.getSlaveConfigurator().removeSlave(id);
-			System.out.println("Slave removal: "+master.getSlaveConfigurator().getSlaveConfig());
+		Thread.sleep(5000);
+		clientService.start();
+		System.out.println("Registries:"+clientService.getRegistries());
+		System.out.println("Agents:"+clientService.getRegistries().get(0).getAgents());
+		clientService.getRegistries().get(0).getAgents().forEach(it->{
+			try{
+				System.out.println(it.getInfo());
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		});
+		proxyBuilder.connect("dosample_name","dosample_group");
+		IMaster master=proxyBuilder.getMaster();
+		System.out.println("master=="+master);
 
+		SlaveInfo slaveConfig=new SlaveInfo();
+		slaveConfig.setThreadPoolSize(1);
+		slaveConfig.setName("doslave_name");
+		slaveConfig.setGroup("doslave_group");
+		long id=master.getSlaveConfigurator().addSlave(slaveConfig);
+		System.out.println("Slave added id="+id);
+		
+		System.out.println("Slaves: "+master.getSlaveConfigurator().getSlaveInfo());
+		
+		master.getSlaveConfigurator().startSlave(id);
+		
+		System.out.println("After slave start: "+master.getSlaveConfigurator().getSlaveInfo());
+		try{
+			IProxySample sample=proxyBuilder.getProxy(IProxySample.class);
+			String answer=sample.helloWorld("hello world!");
+			System.out.println("result=="+answer);
+			
+			Future<String> future=sample.asyncHelloWorld("Async Hello world!");
+			System.out.println("before calling future and blocking");
+			System.out.println("async result=="+future.get());
+			
+			master.getSlaveConfigurator().setSlavePoolSize(id, 5);
+			System.out.println("After slave update: "+master.getSlaveConfigurator().getSlaveInfo());
 		}catch(Throwable th){
 			th.printStackTrace();
 		}

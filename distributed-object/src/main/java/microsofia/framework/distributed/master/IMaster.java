@@ -5,9 +5,9 @@ import microsofia.container.module.endpoint.Server;
 @Server
 public interface IMaster {
 
-	public ISlaveConfigurator getSlaveConfigurator();
+	public ISlaveConfigurator getSlaveConfigurator() throws Exception;
 	
-	public IObjectAllocator getObjectAllocator();
+	public IObjectAllocator getObjectAllocator() throws Exception;
 	
-	public IJobQueue getJobQueue();
+	public IJobQueue getJobQueue() throws Exception;
 }

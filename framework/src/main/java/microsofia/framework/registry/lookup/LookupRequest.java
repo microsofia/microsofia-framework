@@ -9,7 +9,8 @@ import microsofia.framework.client.ClientInfo;
 
 public class LookupRequest implements Externalizable{
 	private ClientInfo clientInfo;
-	private String queue;
+	private String name;
+	private String group;
 	private int weight;
 	
 	public LookupRequest(){
@@ -24,14 +25,22 @@ public class LookupRequest implements Externalizable{
 		this.clientInfo = clientInfo;
 	}
 
-	public String getQueue() {
-		return queue;
+	public String getName() {
+		return name;
 	}
 
-	public void setQueue(String queue) {
-		this.queue = queue;
+	public void setName(String n) {
+		this.name = n;
 	}
 
+	public String getGroup() {
+		return group;
+	}
+
+	public void setGroup(String n) {
+		this.group = n;
+	}
+	
 	public int getWeight() {
 		return weight;
 	}
@@ -43,14 +52,16 @@ public class LookupRequest implements Externalizable{
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		out.writeObject(clientInfo);
-		out.writeUTF(queue);
+		out.writeUTF(name);
+		out.writeUTF(group);
 		out.writeInt(weight);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		clientInfo=(ClientInfo)in.readObject();
-		queue=in.readUTF();
+		name=in.readUTF();
+		group=in.readUTF();
 		weight=in.readInt();
 	}
 }

@@ -21,7 +21,7 @@ public class EchoTest {
 	}
 	
 	public void testEcho() throws Exception{
-		echo=clientService.getClientLookupService().searchAgent(IEcho.class, "echo_queue", 1);
+		echo=clientService.getClientLookupService().searchAgent(IEcho.class, "echo_name","echo_group", 1);
 		helloWorld=echo.getHelloWorld();
 		System.out.println(echo.echo("Hello world!"));
 	}

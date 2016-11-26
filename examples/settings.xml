@@ -140,7 +140,8 @@
 			</cluster>
 		</clusters>
 		<agent>
-			<queue>echo_queue</queue>
+			<name>echo_name</name>
+			<group>echo_group</group>
 			<implementation>echo</implementation>
 			<lookup>
 				<multiplicity>one</multiplicity>

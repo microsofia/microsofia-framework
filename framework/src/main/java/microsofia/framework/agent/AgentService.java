@@ -62,10 +62,11 @@ public class AgentService extends AbstractClientService<AgentInfo> implements IA
 	}
 	
 	protected void internalStart() throws Exception{
-		serviceInfo.setQueue(agentConfiguration.getQueue());
+		serviceInfo.setName(agentConfiguration.getName());
+		serviceInfo.setGroup(agentConfiguration.getGroup());
 		serviceInfo.setLookupConfiguration(agentConfiguration.getLookupConfiguration());
 		
-		List<AgentInfo> others=agents.values(AgentFilters.byQueue(agentConfiguration.getQueue())).get();
+		List<AgentInfo> others=agents.values(AgentFilters.byNameAndGroup(agentConfiguration.getName(),agentConfiguration.getGroup())).get();
 		if (others.size()>0){
 			//for multiplicity one, we make sure that there is only one agentservice running
 			if (agentConfiguration.getLookupConfiguration().getMultiplicity().equals(AgentLookupConfiguration.Multiplicity.one)){

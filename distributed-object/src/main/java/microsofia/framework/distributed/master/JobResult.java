@@ -1,14 +1,9 @@
 package microsofia.framework.distributed.master;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -47,6 +42,7 @@ public class JobResult implements Externalizable{
 		this.id=job.getId();
 		this.job=job;
 		status=Status.CREATED;
+		setStartTime();
 	}
 	
 	public long getId() {
@@ -69,13 +65,21 @@ public class JobResult implements Externalizable{
 		return error;
 	}
 
+	public Throwable getErrorAsThrowable() throws Exception{
+		if (error!=null){
+			return (Throwable)Job.read(error);
+		}else{
+			return null;
+		}
+	}
+	
 	public void setError(byte[] error) {
 		this.error = error;
 	}
 	
 	public void setError(Object o) throws Exception{
 		if (o!=null){
-			error=write(o);
+			error=Job.write(o);
 		}else{
 			error=null;
 		}
@@ -83,7 +87,7 @@ public class JobResult implements Externalizable{
 	
 	public <T> T getError(Class<T> c) throws Exception{
 		if (error!=null){
-			Object o=read(error);
+			Object o=Job.read(error);
 			return c.cast(o);
 		}else{
 			return null;
@@ -92,7 +96,7 @@ public class JobResult implements Externalizable{
 		
 	public void setError(Throwable th) throws Exception{
 		if (th!=null){
-			error=write(th);
+			error=Job.write(th);
 		}else{
 			error=null;
 		}
@@ -104,8 +108,16 @@ public class JobResult implements Externalizable{
 	
 	public <T> T getResult(Class<T> c) throws Exception{
 		if (result!=null){
-			Object o=read(result);
+			Object o=Job.read(result);
 			return c.cast(o);
+		}else{
+			return null;
+		}
+	}
+	
+	public Object getResultAsObject() throws Exception{
+		if (result!=null){
+			return Job.read(result);
 		}else{
 			return null;
 		}
@@ -117,7 +129,7 @@ public class JobResult implements Externalizable{
 	
 	public void setResult(Object o) throws Exception{
 		if (o!=null){
-			result=write(o);
+			result=Job.write(o);
 		}else{
 			result=null;
 		}
@@ -150,6 +162,10 @@ public class JobResult implements Externalizable{
 	public Status getStatus() {
 		return status;
 	}
+	
+	public boolean isStatusFinished(){
+		return status==Status.FINISHED;
+	}
 
 	public void setStatus(Status status) {
 		this.status = status;
@@ -161,19 +177,6 @@ public class JobResult implements Externalizable{
 	
 	public void setStatusArchived(){
 		this.status=Status.ARCHIVED;
-	}
-
-	public static byte[] write(Object o) throws Exception{//TODO review
-		ByteArrayOutputStream bos=new ByteArrayOutputStream();
-		ObjectOutputStream oos=new ObjectOutputStream(bos);
-		oos.writeObject(o);
-		return bos.toByteArray();
-	}
-	
-	public static Object read(byte[] b) throws Exception{
-		ByteArrayInputStream bis=new ByteArrayInputStream(b);
-		ObjectInputStream ois=new ObjectInputStream(bis);
-		return ois.readObject();
 	}
 
 	@Override

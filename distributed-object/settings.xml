@@ -140,7 +140,8 @@
 			</cluster>
 		</clusters>
 		<agent>
-			<queue>dosample</queue>
+			<name>dosample_name</name>
+			<group>dosample_group</group>
 			<implementation>do.master</implementation>
 			<lookup>
 				<multiplicity>one</multiplicity>
@@ -179,7 +180,8 @@
 			</cluster>
 		</clusters>
 		<agent>
-			<queue>doslave</queue>
+			<name>doslave_name</name>
+			<group>doslave_group</group>
 			<implementation>do.slave.sample</implementation>
 			<lookup>
 				<multiplicity>one</multiplicity>

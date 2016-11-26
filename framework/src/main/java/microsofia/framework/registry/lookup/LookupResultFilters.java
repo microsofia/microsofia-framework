@@ -8,34 +8,44 @@ import java.util.function.Function;
 
 public class LookupResultFilters {
 
-	public static Function<LookupResult,Boolean> byQueue(String sn){
-		return new LookupResultByQueueFilter(sn);
+	public static Function<LookupResult,Boolean> byNameAndGroup(String n,String g){
+		return new LookupResultByQueueFilter(n,g);
 	}
 
 	public static class LookupResultByQueueFilter implements Function<LookupResult,Boolean>,Externalizable{
 		private static final long serialVersionUID = 0L;
-		private String queue;
+		private String name;
+		private String group;
 
 		public LookupResultByQueueFilter(){
 		}
 		
-		public LookupResultByQueueFilter(String queue){
-			this.queue=queue;
+		public LookupResultByQueueFilter(String n,String g){
+			this.name=n;
+			this.group=g;
 		}
 
 		@Override
 		public Boolean apply(LookupResult result) {
-			return result.getAgentInfo().getQueue().equals(queue);
+			if (name!=null && !result.getAgentInfo().getName().equals(name)){
+				return false;
+			}
+			if (group!=null && !result.getAgentInfo().getGroup().equals(group)){
+				return false;
+			}
+			return true;
 		}
 
 		@Override
 		public void writeExternal(ObjectOutput out) throws IOException {
-			out.writeUTF(queue);
+			out.writeUTF(name);
+			out.writeUTF(group);
 		}
 
 		@Override
 		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-			queue=in.readUTF();
+			name=in.readUTF();
+			group=in.readUTF();
 		}
 	}
 	

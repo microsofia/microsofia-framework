@@ -7,20 +7,29 @@ import java.io.ObjectOutput;
 import microsofia.framework.client.ClientInfo;
 
 public class AgentInfo extends ClientInfo{
-	private String queue;
+	private String name;
+	private String group;
 	private AgentLookupConfiguration lookupConfiguration;
 
 	public AgentInfo(){
 	}
 
-	public String getQueue() {
-		return queue;
+	public String getName() {
+		return name;
 	}
 
-	public void setQueue(String queue) {
-		this.queue = queue;
+	public void setName(String n) {
+		this.name=n;
 	}
 
+	public String getGroup() {
+		return group;
+	}
+
+	public void setGroup(String g) {
+		this.group=g;
+	}
+	
 	public AgentLookupConfiguration getLookupConfiguration() {
 		return lookupConfiguration;
 	}
@@ -32,19 +41,21 @@ public class AgentInfo extends ClientInfo{
 	@Override
 	public void writeExternal(ObjectOutput out) throws IOException {
 		super.writeExternal(out);
-		out.writeUTF(queue);
+		out.writeUTF(name);
+		out.writeUTF(group);
 		out.writeObject(lookupConfiguration);
 	}
 
 	@Override
 	public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		queue=in.readUTF();
+		name=in.readUTF();
+		group=in.readUTF();
 		lookupConfiguration=(AgentLookupConfiguration)in.readObject();
 	}
 	
 	@Override
 	public String toString(){
-		return super.toString()+"[Queue:"+queue+"][LookupConfiguration:"+lookupConfiguration+"]";
+		return super.toString()+"[Name:"+name+"][Group:"+group+"][LookupConfiguration:"+lookupConfiguration+"]";
 	}
 }

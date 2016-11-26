@@ -44,9 +44,9 @@ import microsofia.framework.service.AbstractService;
 
 public class Framework {
 	private static Log log=LogFactory.getLog(Framework.class);
-	private static final String FWK_REGISTRY = "fwk.registry";
-	private static final String FWK_AGENT = "fwk.agent";
-	private static final String FWK_CLIENT = "fwk.client";
+	private static final String FWK_REGISTRY 	= "fwk.registry";
+	private static final String FWK_AGENT 		= "fwk.agent";
+	private static final String FWK_CLIENT 		= "fwk.client";
 	protected String[] args;
 	protected ApplicationConfig applicationConfig;
 	protected Service service;

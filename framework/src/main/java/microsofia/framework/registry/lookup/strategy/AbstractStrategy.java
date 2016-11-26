@@ -34,11 +34,11 @@ public abstract class AbstractStrategy {
 	
 	//filtering on queue
 	public List<AgentInfo> filterAgents(LookupRequest lookupRequest) throws Exception{
-		return agents.values(AgentFilters.byQueue(lookupRequest.getQueue())).get();
+		return agents.values(AgentFilters.byNameAndGroup(lookupRequest.getName(),lookupRequest.getGroup())).get();
 	}
 	
 	public List<LookupResult> filterLookupResults(LookupRequest lookupRequest) throws Exception{
-		return lookupResults.values(LookupResultFilters.byQueue(lookupRequest.getQueue())).get();
+		return lookupResults.values(LookupResultFilters.byNameAndGroup(lookupRequest.getName(),lookupRequest.getGroup())).get();
 	}
 	
 	public abstract AgentInfo lookup(LookupRequest lookupRequest,List<AgentInfo> agentInfos) throws Exception;

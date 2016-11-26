@@ -16,22 +16,32 @@ import microsofia.framework.client.ClientConfiguration;
 @XmlRootElement(name="agent")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AgentConfiguration extends ClientConfiguration{
-	@XmlElement(name="queue")
-	private String queue;
+	@XmlElement(name="name")
+	private String name;
+	@XmlElement(name="group")
+	private String group;
 	@XmlElement(name="lookup")
 	private AgentLookupConfiguration lookupConfiguration;
 	
 	public AgentConfiguration(){
 	}
 	
-	public String getQueue() {
-		return queue;
+	public String getName() {
+		return name;
 	}
 
-	public void setQueue(String queue) {
-		this.queue = queue;
+	public void setName(String n) {
+		this.name= n;
 	}
 
+	public String getGroup() {
+		return group;
+	}
+
+	public void setGroup(String n) {
+		this.group= n;
+	}
+	
 	public AgentLookupConfiguration getLookupConfiguration() {
 		return lookupConfiguration;
 	}
