@@ -32,20 +32,27 @@ public class InvocationJobHandler implements InvocationHandler{
 		this.classMetadata=new ClassMetadata(theClass);
 	}
 	
+	private Object getReturnedObject(Object proxy,Method method){
+		if (method.getReturnType().equals(theClass)){
+			return proxy;
+		}
+		return null;
+	}
+	
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		Setup setup=method.getAnnotation(Setup.class);
 		if (setup!=null){
 			setupMethod=classMetadata.hashCode(method);
 			setupArguments=args;
-			return null;
+			return getReturnedObject(proxy, method);
 		}
 		
 		TearDown tearDown=method.getAnnotation(TearDown.class);
 		if (tearDown!=null){
 			tearDownMethod=classMetadata.hashCode(method);
 			tearDownArguments=args;
-			return null;
+			return getReturnedObject(proxy, method);
 		}
 		
 		AllocateObject allocateObject=method.getAnnotation(AllocateObject.class);
@@ -53,8 +60,13 @@ public class InvocationJobHandler implements InvocationHandler{
 			if (virtualObjectInfo!=null){
 				throw new IllegalStateException("Cannot create a virtual object as another one is already created:"+virtualObjectInfo);
 			}
-			virtualObjectInfo=objectAllocator.createVirtualObject(setupMethod, Job.write(setupArguments), tearDownMethod, Job.write(tearDownArguments));
-			return null;
+			try{
+				virtualObjectInfo=objectAllocator.createVirtualObject(setupMethod, Job.write(setupArguments), tearDownMethod, Job.write(tearDownArguments));
+			}finally{
+				setupArguments=null;
+				tearDownArguments=null;
+			}
+			return getReturnedObject(proxy, method);
 		}
 		
 		FreeObject freeObject=method.getAnnotation(FreeObject.class);
@@ -64,7 +76,7 @@ public class InvocationJobHandler implements InvocationHandler{
 			}
 			objectAllocator.removeVirtualObject(virtualObjectInfo.getId());
 			virtualObjectInfo=null;
-			return null;
+			return getReturnedObject(proxy, method);
 		}
 		
 		Job job=new Job();
@@ -84,8 +96,6 @@ public class InvocationJobHandler implements InvocationHandler{
 		}else{
 			job.setWeigth(proxyBuilder.getWeigth());
 		}
-		
-		job.setVirtualObjectInfo(virtualObjectInfo);
 		
 		long jobId=objectAllocator.addJob((virtualObjectInfo!=null ? virtualObjectInfo.getId() : -1), job);
 		FutureJobInvocation<Object> futureJobInvocation=new FutureJobInvocation<>(objectAllocator,jobId,proxyBuilder.getPollingPeriod());

@@ -129,7 +129,7 @@ public class Slave implements Runnable, ISlave{
 		while (started.get()){
 			try{
 				JobItem jobItem=jobQueue.takeJob(slaveInfo.getId());
-				if (jobItem!=null){
+				if (jobItem!=null && started.get()){
 					Throwable error=null;
 					if (jobItem.getSetupMethod()>0){
 						try{
@@ -159,10 +159,12 @@ public class Slave implements Runnable, ISlave{
 					}
 
 				}else{
-					synchronized(this){
-						try{
-							wait(pollPeriod);
-						}catch(Exception e2){
+					if (started.get()){
+						synchronized(this){
+							try{
+								wait(pollPeriod);
+							}catch(Exception e2){
+							}
 						}
 					}
 				}

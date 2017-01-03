@@ -188,7 +188,7 @@ public class ObjectAllocator implements IObjectAllocator{
 			if (job.isStatusCreated()){
 				job.setStatusStopped();
 			}
-			return null;
+			return job;
 		});
 	}
 	

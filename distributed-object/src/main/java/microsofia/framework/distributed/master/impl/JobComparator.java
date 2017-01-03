@@ -29,8 +29,8 @@ public class JobComparator implements Comparator<Job>{
 			long wait1=time-j1.getCreationTime();
 			long wait2=time-j2.getCreationTime();
 			
-			long l1=wait1*j1.getWeigth();
-			long l2=wait2*j2.getWeigth();
+			long l1=j1.getWeigth()/wait1;
+			long l2=j2.getWeigth()/wait2;
 			
 			if (l1<l2){
 				return -1;
